@@ -1,0 +1,32 @@
+{
+    "apiID": "one_store__c__function_aadgfg733dkii",
+    "apiName": "GroupBotDeploy",
+    "label": {
+        "zh_CN": "邀请机器人进群",
+        "en_US": "Group Bot Invite"
+    },
+    "description": {
+        "zh_CN": "自定义函数",
+        "en_US": "Custom Function"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "chat_bot",
+            "type": "Record",
+            "label": "群机器人记录",
+            "required": true,
+            "description": "群机器人记录",
+            "objectApiName": "object_chat_bot"
+        }
+    ],
+    "output": [
+        {
+            "key": "code",
+            "type": "BigInt",
+            "label": "分发结果",
+            "description": ""
+        }
+    ]
+}

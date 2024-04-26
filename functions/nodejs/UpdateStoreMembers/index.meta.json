@@ -1,0 +1,16 @@
+{
+  "apiID": "one_store__c__function_aadgfck6dvubu",
+  "apiName": "UpdateStoreMembers",
+  "label": {
+    "zh_CN": "更新门店成员",
+    "en_US": "Update Store Members"
+  },
+  "description": {
+    "zh_CN": "根据最新的组织架构更新门店成员",
+    "en_US": "Update store members according to the latest organizational structure"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": []
+}

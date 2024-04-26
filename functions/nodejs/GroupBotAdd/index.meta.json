@@ -1,0 +1,38 @@
+{
+    "apiID": "one_store__c__function_aadgfhyteasbi",
+    "apiName": "GroupBotAdd",
+    "label": {
+        "zh_CN": "添加机器人进群",
+        "en_US": "Add Bot to Group"
+    },
+    "description": {
+        "zh_CN": "接收群ID和机器人ID，将机器人添加进群",
+        "en_US": "Receive group ID and bot ID, add bot to group"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "chat_id",
+            "type": "Text",
+            "label": "群ID",
+            "required": true,
+            "description": "群ID"
+        },
+        {
+            "key": "bot_app_id",
+            "type": "Text",
+            "label": "机器人ID",
+            "required": true,
+            "description": "机器人ID"
+        }
+    ],
+    "output": [
+        {
+            "key": "code",
+            "type": "BigInt",
+            "label": "分发结果",
+            "description": ""
+        }
+    ]
+}

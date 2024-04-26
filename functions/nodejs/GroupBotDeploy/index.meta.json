@@ -1,0 +1,32 @@
+{
+    "apiID": "one_store__c__function_aadgfg733dkii",
+    "apiName": "GroupBotDeploy",
+    "label": {
+        "zh_CN": "批量部署群机器人",
+        "en_US": "Deploy Group Bots"
+    },
+    "description": {
+        "zh_CN": "根据群范围规则，批量部署群机器人",
+        "en_US": "Deploy group bots according to group range rules"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "chat_bot",
+            "type": "Record",
+            "label": "群机器人记录",
+            "required": true,
+            "description": "群机器人记录",
+            "objectApiName": "object_chat_bot"
+        }
+    ],
+    "output": [
+        {
+            "key": "code",
+            "type": "BigInt",
+            "label": "分发结果",
+            "description": ""
+        }
+    ]
+}

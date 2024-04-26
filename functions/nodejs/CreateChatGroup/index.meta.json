@@ -1,0 +1,27 @@
+{
+  "apiID": "one_store__c__function_aadgddpqdwsau",
+  "apiName": "CreateChatGroup",
+  "label": {
+    "zh_CN": "创建群",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "自定义函数",
+    "en_US": "Custom Function"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": [
+    {
+      "key": "response",
+      "type": "JSON",
+      "label": "执行结果",
+      "description": "",
+      "schema": {
+        "code": 0,
+        "message": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "params": {
+    "chat_id": "oc_771f4f489610856c9b0609e84d769a90",
+    "group_tab": {
+      "pin_name": "更新后的谷歌",
+      "pin_url": "https://www.google.com",
+      "pin_icon": null
+    },
+    "group_tab_id": "7358799236596842497"
+  },
+  "context": {}
+}

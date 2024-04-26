@@ -1,0 +1,16 @@
+{
+  "apiID": "one_store__c__function_aadge4ofqjkdg",
+  "apiName": "FeishuUserGroupListFetch",
+  "label": {
+    "zh_CN": "获取飞书用户组",
+    "en_US": "Fetch Feishu User Group List"
+  },
+  "description": {
+    "zh_CN": "获取飞书用户组列表",
+    "en_US": "Fetch Feishu User Group List"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": []
+}

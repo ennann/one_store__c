@@ -1,0 +1,16 @@
+{
+  "apiID": "one_store__c__function_aadgfg3jtlcru",
+  "apiName": "GetStoreMember",
+  "label": {
+    "zh_CN": "获取门店成员",
+    "en_US": "Get Store Member"
+  },
+  "description": {
+    "zh_CN": "根据部门记录，获取门店店长和店员",
+    "en_US": "Get store manager and store clerk based on department records"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": []
+}

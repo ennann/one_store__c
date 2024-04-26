@@ -1,0 +1,36 @@
+{
+    "apiID": "one_store__c__function_aadgd6sfnq4ig",
+    "apiName": "GroupTabRevoke",
+    "label": {
+        "zh_CN": "删除群置顶标签",
+        "en_US": "Revoke Group Tab"
+    },
+    "description": {
+        "zh_CN": "根据群ID和群标签ID，删除群置顶标签",
+        "en_US": "Revoke group top tag according to group ID and group tag ID"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "chat_pin",
+            "type": "Record",
+            "label": "群置顶标签",
+            "required": true,
+            "description": "群置顶标签",
+            "objectApiName": "object_chat_pin"
+        }
+    ],
+    "output": [
+        {
+            "key": "deleteResults",
+            "type": "List",
+            "required": false,
+            "label": "删除结果",
+            "description": "",
+            "listItem": {
+                "type": "JSON"
+            }
+        }
+    ]
+}

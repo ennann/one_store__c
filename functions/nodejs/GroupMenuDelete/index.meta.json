@@ -1,0 +1,31 @@
+{
+    "apiID": "one_store__c__function_aadgd7et2d2ci",
+    "apiName": "GroupMenuDelete",
+    "label": {
+        "zh_CN": "删除群菜单",
+        "en_US": "Delete Group Menu"
+    },
+    "description": {
+        "zh_CN": "根据群ID删除指定群菜单",
+        "en_US": "Delete the specified group menu according to the group ID"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "chat_id",
+            "type": "Text",
+            "label": "群ID",
+            "required": true,
+            "description": "群ID"
+        }
+    ],
+    "output": [
+        {
+            "key": "code",
+            "type": "BigInt",
+            "label": "停用结果",
+            "description": ""
+        }
+    ]
+}

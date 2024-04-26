@@ -1,0 +1,32 @@
+{
+    "apiID": "one_store__c__function_aadgfieya46es",
+    "apiName": "GroupBotRevoke",
+    "label": {
+        "zh_CN": "批量移除群机器人",
+        "en_US": "Batch Remove Group Robots"
+    },
+    "description": {
+        "zh_CN": "根据群范围规则，批量移除群机器人",
+        "en_US": "Batch remove group robots according to group scope rules"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "chat_bot",
+            "type": "Record",
+            "label": "群机器人记录",
+            "required": true,
+            "description": "群机器人记录",
+            "objectApiName": "object_chat_bot"
+        }
+    ],
+    "output": [
+        {
+            "key": "code",
+            "type": "BigInt",
+            "label": "分发结果",
+            "description": ""
+        }
+    ]
+}

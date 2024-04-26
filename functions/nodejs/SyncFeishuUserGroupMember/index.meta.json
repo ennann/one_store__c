@@ -1,0 +1,16 @@
+{
+  "apiID": "one_store__c__function_aadge4vjclshw",
+  "apiName": "SyncFeishuUserGroupMember",
+  "label": {
+    "zh_CN": "同步飞书用户组成员",
+    "en_US": "Synchronize Feishu User Group Member"
+  },
+  "description": {
+    "zh_CN": "根据飞书用户组列表，获取所有用户组成员，并写入 aPaaS 数据对象中",
+    "en_US": "Fetch all user group members based on the Feishu user group list"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": []
+}

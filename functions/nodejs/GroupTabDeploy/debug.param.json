@@ -1,0 +1,10 @@
+{
+  "params": {
+    "chat_pin": {
+      "_id": 1797193679860756,
+      "pin_name": "公司主入口",
+      "pin_url": "https://www.feishu.cn"
+    }
+  },
+  "context": {}
+}

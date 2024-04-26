@@ -1,0 +1,24 @@
+{
+  "apiID": "one_store__c__function_aadgduleyumfa",
+  "apiName": "ReceiveFeishuEvent",
+  "label": {
+    "zh_CN": "接收飞书事件",
+    "en_US": "Receive Feishu Event"
+  },
+  "description": {
+    "zh_CN": "接收通用飞书事件。",
+    "en_US": ""
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "event",
+      "type": "JSON",
+      "label": "通用事件",
+      "required": false,
+      "description": ""
+    }
+  ],
+  "output": []
+}

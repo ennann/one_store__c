@@ -1,0 +1,17 @@
+{
+  "apiID": "one_store__c__function_aadgdtk6xvwhs",
+  "apiName": "SetBotAsGroupAdmin",
+  "label": {
+    "zh_CN": "设置机器人为群管理员",
+    "en_US": "SetBotAsGroupAdmin"
+  },
+  "description": {
+    "zh_CN": "将机器人设置为群的管理员",
+    "en_US": null
+  },
+  "isPublicAPI": false,
+  "frontendSDKInvokable": true,
+  "longTaskMode": false,
+  "input": [],
+  "output": []
+}

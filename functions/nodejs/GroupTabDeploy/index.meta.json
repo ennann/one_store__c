@@ -1,0 +1,32 @@
+{
+    "apiID": "one_store__c__function_aadgd6rpydgls",
+    "apiName": "GroupTabDeploy",
+    "label": {
+        "zh_CN": "批量分发群置顶标签",
+        "en_US": "Batch deploy group top tags"
+    },
+    "description": {
+        "zh_CN": "根据群ID和群置顶标签ID，更新群置顶标签",
+        "en_US": "Update group tab according to group ID and group tab ID"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "chat_pin",
+            "type": "Record",
+            "label": "群置顶记录",
+            "required": true,
+            "description": "群置顶记录",
+            "objectApiName": "object_chat_pin"
+        }
+    ],
+    "output": [
+        {
+            "key": "code",
+            "type": "BigInt",
+            "label": "分发结果",
+            "description": ""
+        }
+    ]
+}

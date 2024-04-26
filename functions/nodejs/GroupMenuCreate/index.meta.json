@@ -1,0 +1,32 @@
+{
+  "apiID": "one_store__c__function_aadgd7byj3ohu",
+  "apiName": "GroupMenuCreate",
+  "label": {
+    "zh_CN": "创建群菜单",
+    "en_US": "Create Group Menu"
+  },
+  "description": {
+    "zh_CN": "创建置顶群内的群菜单",
+    "en_US": "Create a group menu in the group"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "chat_id",
+      "type": "Text",
+      "label": "群ID",
+      "required": true,
+      "description": "群ID"
+    },
+    {
+      "key": "chat_menu_catalog",
+      "type": "Record",
+      "label": "群菜单分类",
+      "required": true,
+      "description": "群菜单分类",
+      "objectApiName": "object_chat_menu_catalog"
+    }
+  ],
+  "output": []
+}

@@ -1,0 +1,32 @@
+{
+    "apiID": "one_store__c__function_aadgd7fb3qmba",
+    "apiName": "GroupMenuDeploy",
+    "label": {
+        "zh_CN": "批量分发群菜单",
+        "en_US": "Batch Deploy Group Menu"
+    },
+    "description": {
+        "zh_CN": "根据群菜单规则，批量分发群菜单",
+        "en_US": "Batch deploy group menu according to group menu rules"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "chat_menu_catalog",
+            "type": "Record",
+            "label": "群菜单分类",
+            "required": true,
+            "description": "群菜单分类",
+            "objectApiName": "object_chat_menu_catalog"
+        }
+    ],
+    "output": [
+        {
+            "key": "code",
+            "type": "BigInt",
+            "label": "分发结果",
+            "description": ""
+        }
+    ]
+}

@@ -1,0 +1,25 @@
+{
+    "apiID": "one_store__c__function_aadgeddvlzady",
+    "apiName": "DeployChatRange",
+    "label": {
+        "zh_CN": "分发规则群组范围",
+        "en_US": "Deploy Chat Range"
+    },
+    "description": {
+        "zh_CN": "根据分发规则，找到范围内所有群记录，返回群ID列表",
+        "en_US": "According to the distribution rules, find all group records within the range and return the group ID list."
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "deploy_rule",
+            "type": "Record",
+            "label": "下发规则",
+            "required": true,
+            "description": "下发规则",
+            "objectApiName": "object_deploy_rule"
+        }
+    ],
+    "output": []
+}

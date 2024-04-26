@@ -1,0 +1,41 @@
+{
+    "apiID": "one_store__c__function_aadgdusimkokg",
+    "apiName": "GroupMessageSend",
+    "label": {
+        "zh_CN": "发送群卡片消息",
+        "en_US": "Send Group Message"
+    },
+    "description": {
+        "zh_CN": "根据群ID，发送卡片消息。",
+        "en_US": "Send card message according to group ID."
+    },
+    "isPublicAPI": false,
+    "frontendSDKInvokable": false,
+    "longTaskMode": false,
+    "input": [
+        {
+            "key": "chat_id",
+            "type": "Text",
+            "label": "群ID",
+            "required": true,
+            "description": "群ID"
+        },
+        {
+            "key": "message_content",
+            "type": "Record",
+            "label": "消息卡片内容",
+            "required": false,
+            "description": "",
+            "objectApiName": "object_chat_message_def"
+        },
+        {
+            "key": "message_template",
+            "type": "Record",
+            "label": "消息模板ID",
+            "required": false,
+            "description": "消息模板ID",
+            "objectApiName": "object_message_card_def"
+        }
+    ],
+    "output": []
+}
