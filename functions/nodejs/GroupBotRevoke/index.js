@@ -1,4 +1,4 @@
-const { newLarkClient, batchOperation } = require('../utils');
+const { newLarkClient, createLimiter, batchOperation } = require('../utils');
 
 /**
  * @param {Params}  params     自定义参数
@@ -55,8 +55,11 @@ module.exports = async function (params, context, logger) {
         }
     };
 
+    // 创建限流器
+    const limitedRemoveBotFromChat = createLimiter(removeBotFromChat);
+
     // 并行执行将机器人移除群聊的操作
-    const removeBotResults = await Promise.all(chat_id_list.map(chat_id => removeBotFromChat(chat_id)));
+    const removeBotResults = await Promise.all(chat_id_list.map(chat_id => limitedRemoveBotFromChat(chat_id)));
     logger.info('机器人移出群聊的结果', removeBotResults);
 
     // 处理成功和失败的结果
