@@ -18,9 +18,9 @@ module.exports = async function (params, context, logger) {
     }
 
     // 获取群置顶的群聊ID
-    const chat_record_list = await faas.function('GroupTabDeployRange').invoke({ chat_tab_deploy_range: chat_pin });
-    const chat_id_list = chat_record_list.map(item => item.chat_id);
-    logger.info('根据群置顶规则获取到的群ID列表为', chat_id_list);
+    const chatRecordList = await faas.function('GroupTabDeployRange').invoke({ chat_tab_deploy_range: chat_pin });
+    const chatIdList = chatRecordList.map(item => item.chat_id);
+    logger.info('根据群置顶规则获取到的群ID列表为', chatIdList);
 
     // 定义一个删除函数
     const deleteGroupTab = async (client, chat_id, tab_name) => {
@@ -61,28 +61,28 @@ module.exports = async function (params, context, logger) {
         }
     };
 
-    // 循环 chat_id_list 创建 Promise
+    // 循环 chatIdList 创建 Promise
     const client = await newLarkClient({ userId: context.user._id }, logger);
 
-    const deletePromises = chat_id_list.map(chat_id => deleteGroupTab(client, chat_id, chat_pin.pin_name));
+    const deletePromises = chatIdList.map(chat_id => deleteGroupTab(client, chat_id, chat_pin.pin_name));
 
     // 并发执行 Promise
     const deleteResults = await Promise.all(deletePromises);
 
     logger.info('删除群置顶标签结果', deleteResults);
 
-    const batch_delete_ids = [];
+    const batchDeleteIds = [];
     await application.data
         .object('object_chat_pin_relation')
         .select('_id')
         .where({ chat_pin: chat_pin._id })
         .findStream(async record => {
-            batch_delete_ids.push(...record.map(item => item._id));
+            batchDeleteIds.push(...record.map(item => item._id));
         });
-    logger.info('需要删除的群置顶关系数据ID列表', batch_delete_ids);
+    logger.info('需要删除的群置顶关系数据ID列表', batchDeleteIds);
 
-    if (batch_delete_ids.length > 0) {
-        batchOperation(logger, 'object_chat_pin_relation', 'batchDelete', batch_delete_ids);
+    if (batchDeleteIds.length > 0) {
+        batchOperation(logger, 'object_chat_pin_relation', 'batchDelete', batchDeleteIds);
     }
 
 

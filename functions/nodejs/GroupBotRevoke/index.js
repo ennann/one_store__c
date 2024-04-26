@@ -19,11 +19,11 @@ module.exports = async function (params, context, logger) {
     }
 
     // 调用函数获取群置顶的群聊ID列表
-    const chat_record_list = await faas.function('DeployChatRange').invoke({ deploy_rule: chat_bot.chat_rule });
-    const chat_id_list = chat_record_list.map(item => item.chat_id);
-    logger.info('根据规则获取到的群ID列表为', chat_id_list);
+    const chatRecordList = await faas.function('DeployChatRange').invoke({ deploy_rule: chat_bot.chat_rule });
+    const chatIdList = chatRecordList.map(item => item.chat_id);
+    logger.info('根据规则获取到的群ID列表为', chatIdList);
 
-    if (!chat_id_list || chat_id_list.length === 0) {
+    if (!chatIdList || chatIdList.length === 0) {
         logger.error('查询结果为空，未找到对应的群聊');
         return { code: -2, message: '未找到对应的群聊，无法分发' };
     }
@@ -59,30 +59,30 @@ module.exports = async function (params, context, logger) {
     const limitedRemoveBotFromChat = createLimiter(removeBotFromChat);
 
     // 并行执行将机器人移除群聊的操作
-    const removeBotResults = await Promise.all(chat_id_list.map(chat_id => limitedRemoveBotFromChat(chat_id)));
+    const removeBotResults = await Promise.all(chatIdList.map(chat_id => limitedRemoveBotFromChat(chat_id)));
     logger.info('机器人移出群聊的结果', removeBotResults);
 
     // 处理成功和失败的结果
-    const success_list = removeBotResults.filter(item => item.code === 0);
-    const failed_list = removeBotResults.filter(item => item.code !== 0);
+    const successList = removeBotResults.filter(item => item.code === 0);
+    const failedList = removeBotResults.filter(item => item.code !== 0);
 
-    logger.info(`成功数量 ${success_list.length}，失败数量 ${failed_list.length}`);
-    logger.info('成功列表', success_list);
-    logger.info('失败列表', failed_list);
+    logger.info(`成功数量 ${successList.length}，失败数量 ${failedList.length}`);
+    logger.info('成功列表', successList);
+    logger.info('失败列表', failedList);
 
     // 找到关系表中的所有当前机器人关系
-    const batch_delete_ids = [];
+    const batchDeleteIds = [];
     await context.db
         .object('object_chat_bot_relation')
         .select('_id')
         .where({ bot: chat_bot._id })
         .findStream(async records => {
-            batch_delete_ids.push(...records.map(item => item._id));
+            batchDeleteIds.push(...records.map(item => item._id));
         });
     logger.info('找到的机器人关系列表', bot_chat_relations);
 
-    if (batch_delete_ids.length > 0) {
-        batchOperation(logger, 'object_chat_pin_relation', 'batchDelete', batch_delete_ids);
+    if (batchDeleteIds.length > 0) {
+        batchOperation(logger, 'object_chat_pin_relation', 'batchDelete', batchDeleteIds);
     }
 
     return { code: 0, message: '机器人移出群聊成功' };

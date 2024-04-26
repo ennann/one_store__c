@@ -18,10 +18,10 @@ module.exports = async function (params, context, logger) {
         return { code: -1, message: '错误：缺少群置顶信息' };
     }
 
-    const chat_record_list = await faas.function('DeployChatRange').invoke({ deploy_rule: chat_pin.chat_rule });
-    const chat_id_list = chat_record_list.map(item => item.chat_id);
+    const chatRecordList = await faas.function('DeployChatRange').invoke({ deploy_rule: chat_pin.chat_rule });
+    const chatIdList = chatRecordList.map(item => item.chat_id);
 
-    if (!chat_id_list || chat_id_list.length === 0) {
+    if (!chatIdList || chatIdList.length === 0) {
         logger.error('查询结果为空，未找到对应的群聊');
         return { code: -2, message: '未找到对应的群聊，无法分发' };
     }
@@ -79,18 +79,18 @@ module.exports = async function (params, context, logger) {
     const limitedAddPinToChat = createLimiter(addPinToChat);
 
     // 并行执行添加置顶信息到群聊的操作
-    const add_pin_results = await Promise.all(chat_id_list.map(chat_id => limitedAddPinToChat(chat_id)));
+    const addPinResults = await Promise.all(chatIdList.map(chat_id => limitedAddPinToChat(chat_id)));
 
-    const success_list = add_pin_results.filter(item => item.code === 0);
-    const failed_list = add_pin_results.filter(item => item.code !== 0);
+    const successList = addPinResults.filter(item => item.code === 0);
+    const failedList = addPinResults.filter(item => item.code !== 0);
 
-    logger.info(`成功数量 ${success_list.length}，失败数量 ${failed_list.length}`);
+    logger.info(`成功数量 ${successList.length}，失败数量 ${failedList.length}`);
 
     // Optional: Batch create relationship data if necessary
-    const batch_create_data = success_list.map(item => ({
+    const batchCreateData = successList.map(item => ({
         union_id: `${pin_name}-${chat_pin._id}-${item.chat_id}`,
         chat_pin: { _id: chat_pin._id },
-        chat: { _id: chat_record_list.find(chat => chat.chat_id === item.chat_id)._id },
+        chat: { _id: chatRecordList.find(chat => chat.chat_id === item.chat_id)._id },
     }));
 
     const create_pin_chat_relation = async (data) => {
@@ -102,17 +102,17 @@ module.exports = async function (params, context, logger) {
         }
     }
 
-    const create_relation_results = await Promise.all(batch_create_data.map(data => create_pin_chat_relation(data)));
-    logger.info('创建群置顶和群的关系结果', JSON.stringify(create_relation_results, null, 2));
+    const createRelationResults = await Promise.all(batchCreateData.map(data => create_pin_chat_relation(data)));
+    logger.info('创建群置顶和群的关系结果', JSON.stringify(createRelationResults, null, 2));
 
     return {
-        code: success_list.length > 0 ? 0 : -1,
+        code: successList.length > 0 ? 0 : -1,
         message: '群置顶分发完成',
         data: {
-            success_count: success_list.length,
-            success_list,
-            failed_count: failed_list.length,
-            failed_list,
+            success_count: successList.length,
+            successList,
+            failed_count: failedList.length,
+            failedList,
         },
     };
 };

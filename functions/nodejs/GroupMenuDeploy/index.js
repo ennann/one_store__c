@@ -37,10 +37,10 @@ module.exports = async function (params, context, logger) {
         .find();
 
     // 获取分配的群聊列表和需要分配的菜单数据
-    const [chat_record_list, chat_menu_records] = await Promise.all([distributionChatListPromise, chatMenuRecordsPromise]);
-    const chat_id_list = chat_record_list.map(item => item.chat_id);
+    const [chatRecordList, chatMenuRecords] = await Promise.all([distributionChatListPromise, chatMenuRecordsPromise]);
+    const chatIdList = chatRecordList.map(item => item.chat_id);
 
-    if (!chat_id_list || chat_id_list.length === 0 || !chat_menu_records || chat_menu_records.length === 0) {
+    if (!chatIdList || chatIdList.length === 0 || !chatMenuRecords || chatMenuRecords.length === 0) {
         logger.error('查询结果为空，未找到对应的群聊或菜单数据');
         return {
             code: -2,
@@ -48,19 +48,19 @@ module.exports = async function (params, context, logger) {
         };
     }
 
-    logger.info('查询到的群聊列表', JSON.stringify(chat_id_list, null, 2));
-    logger.info('查询到的菜单数据', JSON.stringify(chat_menu_records, null, 2));
+    logger.info('查询到的群聊列表', JSON.stringify(chatIdList, null, 2));
+    logger.info('查询到的菜单数据', JSON.stringify(chatMenuRecords, null, 2));
 
-    const menu_data = convertRecordsToGroupMenu(chat_menu_records); // 在循环内部消费 menu_data，所以这里不需要深拷贝
+    const menu_data = convertRecordsToGroupMenu(chatMenuRecords); // 在循环内部消费 menu_data，所以这里不需要深拷贝
     logger.info('转换后的菜单数据', JSON.stringify(menu_data, null, 2));
 
-    // 对 chat_id_list 进行循环，分别创建群功能菜单
+    // 对 chatIdList 进行循环，分别创建群功能菜单
     let success_count = 0;
     let failed_count = 0;
-    let batch_update_data = [];
+    let batchUpdateData = [];
     let fail_chat_list = [];
 
-    for (let chat_id of chat_id_list) {
+    for (let chat_id of chatIdList) {
         // 因为在循环内，调用太多次 logger 会导致日志过多，所以这里使用一个变量来记录日志，最后一次性输出，一个循环一个日志
         let loop_logs = `==> 开始处理群聊 ${chat_id}\n`;
 
@@ -84,8 +84,8 @@ module.exports = async function (params, context, logger) {
             let menu_res = await faas.function('GroupMenuCreate').invoke({ chat_id, menu_data });
             loop_logs += `==> 创建群功能菜单结果：${JSON.stringify(menu_res)}\n`;
 
-            batch_update_data.push({
-                _id: chat_record_list.find(item => item.chat_id === chat_id)._id,
+            batchUpdateData.push({
+                _id: chatRecordList.find(item => item.chat_id === chat_id)._id,
                 chat_catalog: { _id: chat_menu_catalog._id },
             });
 
@@ -102,13 +102,13 @@ module.exports = async function (params, context, logger) {
         }
     }
 
-    logger.info('群置顶分发完成，批量更新数据数量为 batch_update_data ', batch_update_data.length);
-    logger.info(JSON.stringify(batch_update_data, null, 2));
+    logger.info('群置顶分发完成，批量更新数据数量为 batchUpdateData ', batchUpdateData.length);
+    logger.info(JSON.stringify(batchUpdateData, null, 2));
     logger.info(`成功数量 ${success_count}，失败数量 ${failed_count}，失败群聊列表 ${JSON.stringify(fail_chat_list, null, 2)}`);
 
     // // 开始批量创建数据
-    if (batch_update_data.length > 0) {
-        await batchOperation(logger, "object_feishu_chat", "batchUpdate", batch_update_data);
+    if (batchUpdateData.length > 0) {
+        await batchOperation(logger, "object_feishu_chat", "batchUpdate", batchUpdateData);
         logger.info('批量创建群置顶关系数据完成');
     }
 

@@ -18,11 +18,11 @@ module.exports = async function (params, context, logger) {
     }
 
     // 调用函数获取群机器人的群聊ID列表
-    const chat_record_list = await faas.function('DeployChatRange').invoke({ deploy_rule: chat_bot.chat_rule });
-    const chat_id_list = chat_record_list.map(item => item.chat_id);
-    logger.info('根据规则获取到的群ID列表为', chat_id_list);
+    const chatRecordList = await faas.function('DeployChatRange').invoke({ deploy_rule: chat_bot.chat_rule });
+    const chatIdList = chatRecordList.map(item => item.chat_id);
+    logger.info('根据规则获取到的群ID列表为', chatIdList);
 
-    if (!chat_id_list || chat_id_list.length === 0) {
+    if (!chatIdList || chatIdList.length === 0) {
         logger.error('查询结果为空，未找到对应的群聊');
         return { code: -2, message: '未找到对应的群聊，无法分发' };
     }
@@ -59,27 +59,27 @@ module.exports = async function (params, context, logger) {
     const limitedAddBotToChat = createLimiter(addBotToChat);
 
     // 并行执行机器人添加到群聊的操作
-    const add_bot_results = await Promise.all(chat_id_list.map(chat_id => limitedAddBotToChat(chat_id, bot_app_id)));
+    const add_bot_results = await Promise.all(chatIdList.map(chat_id => limitedAddBotToChat(chat_id, bot_app_id)));
     logger.info('机器人加入群聊的结果', JSON.stringify(add_bot_results, null, 2));
 
     // 处理成功和失败的结果
-    const success_list = add_bot_results.filter(item => item.code === 0);
-    const failed_list = add_bot_results.filter(item => item.code !== 0);
+    const successList = add_bot_results.filter(item => item.code === 0);
+    const failedList = add_bot_results.filter(item => item.code !== 0);
 
-    logger.info(`成功数量 ${success_list.length}，失败数量 ${failed_list.length}`);
-    logger.info('成功列表', JSON.stringify(success_list, null, 2));
-    logger.info('失败列表', JSON.stringify(failed_list, null, 2));
+    logger.info(`成功数量 ${successList.length}，失败数量 ${failedList.length}`);
+    logger.info('成功列表', JSON.stringify(successList, null, 2));
+    logger.info('失败列表', JSON.stringify(failedList, null, 2));
 
     // 根据成功列表准备批量创建数据关系
-    const batch_create_data = success_list.map(item => ({
+    const batchCreateData = successList.map(item => ({
         union_id: `${bot_app_id}-${item.chat_id}`,
         bot: { _id: chat_bot._id },
-        chat: { _id: chat_record_list.find(chat => chat.chat_id === item.chat_id)._id },
+        chat: { _id: chatRecordList.find(chat => chat.chat_id === item.chat_id)._id },
     }));
-    logger.info('准备创建关系的数据', JSON.stringify(batch_create_data, null, 2));
+    logger.info('准备创建关系的数据', JSON.stringify(batchCreateData, null, 2));
 
     // 创建一个函数，机器人和群的关系
-    const create_bot_chat_relation = async (data) => {
+    const createBotChatRelation = async (data) => {
         try {
             await application.data.object('object_chat_bot_relation').create(data);
             return { code: 0, message: '创建关系成功', result: 'success' };
@@ -89,18 +89,18 @@ module.exports = async function (params, context, logger) {
     }
 
     // 并行执行创建关系的操作
-    const create_relation_results = await Promise.all(batch_create_data.map(data => create_bot_chat_relation(data)));
-    logger.info('创建机器人和群的关系结果', JSON.stringify(create_relation_results, null, 2));
+    const createRelationResults = await Promise.all(batchCreateData.map(data => createBotChatRelation(data)));
+    logger.info('创建机器人和群的关系结果', JSON.stringify(createRelationResults, null, 2));
 
 
     return {
-        code: success_list.length > 0 ? 0 : -1,
+        code: successList.length > 0 ? 0 : -1,
         message: '群机器人分发完成',
         data: {
-            success_count: success_list.length,
-            success_list,
-            failed_count: failed_list.length,
-            failed_list,
+            success_count: successList.length,
+            successList,
+            failed_count: failedList.length,
+            failedList,
         },
     };
 };
