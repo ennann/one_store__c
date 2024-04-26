@@ -59,12 +59,12 @@ module.exports = async function (params, context, logger) {
     const limitedAddBotToChat = createLimiter(addBotToChat);
 
     // 并行执行机器人添加到群聊的操作
-    const add_bot_results = await Promise.all(chatIdList.map(chat_id => limitedAddBotToChat(chat_id, bot_app_id)));
-    logger.info('机器人加入群聊的结果', JSON.stringify(add_bot_results, null, 2));
+    const addBotResults = await Promise.all(chatIdList.map(chat_id => limitedAddBotToChat(chat_id, bot_app_id)));
+    logger.info('机器人加入群聊的结果', JSON.stringify(addBotResults, null, 2));
 
     // 处理成功和失败的结果
-    const successList = add_bot_results.filter(item => item.code === 0);
-    const failedList = add_bot_results.filter(item => item.code !== 0);
+    const successList = addBotResults.filter(item => item.code === 0);
+    const failedList = addBotResults.filter(item => item.code !== 0);
 
     logger.info(`成功数量 ${successList.length}，失败数量 ${failedList.length}`);
     logger.info('成功列表', JSON.stringify(successList, null, 2));
@@ -98,9 +98,9 @@ module.exports = async function (params, context, logger) {
         message: '群机器人分发完成',
         data: {
             success_count: successList.length,
-            successList,
+            success_list: successList,
             failed_count: failedList.length,
-            failedList,
+            failed_list: failedList,
         },
     };
 };

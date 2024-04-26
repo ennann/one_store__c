@@ -110,9 +110,9 @@ module.exports = async function (params, context, logger) {
         message: '群置顶分发完成',
         data: {
             success_count: successList.length,
-            successList,
+            success_list: successList,
             failed_count: failedList.length,
-            failedList,
+            failed_list: failedList,
         },
     };
 };
