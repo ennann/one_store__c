@@ -26,11 +26,12 @@ module.exports = async function (params, context, logger) {
     const deployRuleRecord = await application.data
         .object('object_deploy_rule')
         .select(['_id', 'all_chats', 'department', 'chat_tag', 'specific_chat', 'exclude_chat'])
-        .where({ _id: deploy_rule._id })
+        .where({ _id: deploy_rule._id || deploy_rule.id })
         .findOne();
     logger.info('分配规则详情', JSON.stringify(deployRuleRecord, null, 2));
 
-    // 根据详情里的字段，查找群列表
+    // 定义返回数组
+    let finalChatList = [];
 
     // 定义
     const fetchChatRecords = async (query, description) => {
@@ -54,39 +55,39 @@ module.exports = async function (params, context, logger) {
     // 获取全部群
     if (deployRuleRecord.all_chats && deployRuleRecord.all_chats === 'option_yes') {
         let all_chats = await fetchChatRecords({ chat_id: application.operator.notEmpty() }, '全部');
-        final_chat_list.push(...all_chats);
+        finalChatList.push(...all_chats);
     }
 
     // 获取部门下的群
     if (deployRuleRecord.department && deployRuleRecord.department.length > 0) {
         let department_ids = deployRuleRecord.department.map(item => item._id);
         let department_chats = await fetchChatRecords({ department: application.operator.hasAnyOf(department_ids) }, '部门');
-        final_chat_list.push(...department_chats);
+        finalChatList.push(...department_chats);
     }
 
     // 获取标签下的群
     if (deployRuleRecord.chat_tag && deployRuleRecord.chat_tag.length > 0) {
         let chat_tag_record_ids = deployRuleRecord.chat_tag.map(item => item._id);
         let chat_tag_chats = await fetchChatRecords({ chat_tag: application.operator.hasAnyOf(chat_tag_record_ids) }, '群标签');
-        final_chat_list.push(...chat_tag_chats);
+        finalChatList.push(...chat_tag_chats);
     }
 
     // 获取指定群
     if (deployRuleRecord.specific_chat && deployRuleRecord.specific_chat.length > 0) {
         let specific_chat_ids = deployRuleRecord.specific_chat.map(item => item._id);
         let specific_chats = await fetchChatRecords({ _id: application.operator.in(specific_chat_ids) }, '指定群聊');
-        final_chat_list.push(...specific_chats);
+        finalChatList.push(...specific_chats);
     }
 
-    // 对 final_chat_list 去重，逻辑是 chat_id 唯一
-    final_chat_list = final_chat_list.filter((item, index, self) => self.findIndex(t => t.chat_id === item.chat_id) === index);
+    // 对 finalChatList 去重，逻辑是 chat_id 唯一
+    finalChatList = finalChatList.filter((item, index, self) => self.findIndex(t => t.chat_id === item.chat_id) === index);
 
     // 获取需要排除的群
     if (deployRuleRecord.exclude_chat && deployRuleRecord.exclude_chat.length > 0) {
         let exclude_chat_ids = deployRuleRecord.exclude_chat.map(item => item._id);
         let exclude_chats = await fetchChatRecords({ _id: application.operator.in(exclude_chat_ids) }, '排除的群聊');
-        final_chat_list = final_chat_list.filter(item => !exclude_chats.some(exclude => exclude._id === item._id));
+        finalChatList = finalChatList.filter(item => !exclude_chats.some(exclude => exclude._id === item._id));
     }
 
-    return final_chat_list;
+    return finalChatList;
 };
