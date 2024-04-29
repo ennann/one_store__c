@@ -1,0 +1,17 @@
+{
+  "apiID": "one_store__c__function_aadgetezshofw",
+  "apiName": "UpdateMemberByStoreChange",
+  "label": {
+    "zh_CN": "门店成员变化更新群成员",
+    "en_US": "Update group members when store members change"
+  },
+  "description": {
+    "zh_CN": "当门店成员变化时，根据新增和删除的成员，更新群成员",
+    "en_US": "When the store members change, update the group members according to the added and deleted members"
+  },
+  "isPublicAPI": false,
+  "frontendSDKInvokable": false,
+  "longTaskMode": false,
+  "input": [],
+  "output": []
+}

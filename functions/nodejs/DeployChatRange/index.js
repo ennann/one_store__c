@@ -15,11 +15,13 @@ module.exports = async function (params, context, logger) {
     // 在这里补充业务代码
 
     const { deploy_rule } = params;
-    let final_chat_id_list = [];
+
+    // 定义返回数组
+    let finalChatList = [];
 
     if (!deploy_rule) {
         logger.error('错误：缺少分配规则');
-        return final_chat_id_list;
+        return finalChatList;
     }
 
     // 获取规则详情
@@ -30,25 +32,24 @@ module.exports = async function (params, context, logger) {
         .findOne();
     logger.info('分配规则详情', JSON.stringify(deployRuleRecord, null, 2));
 
-    // 定义返回数组
-    let finalChatList = [];
+
 
     // 定义
     const fetchChatRecords = async (query, description) => {
         try {
-            const chat_records = [];
+            const chatRecords = [];
             await application.data
                 .object('object_feishu_chat')
                 .select(['chat_id'])
                 .where(query)
-                .findStream(async record => {
+                .findStream(async records => {
                     // 仅仅 push (item => ({ _id: item._id, chat_id: item.chat_id })) 属性
-                    chat_records.push(record);
+                    chatRecords.push(...records.map(item => ({ _id: item._id, chat_id: item.chat_id })));
                 });
-            return chat_records
+            return chatRecords
         } catch (error) {
             logger.error(`${description}查询时发生错误：`, error);
-            return final_chat_id_list;
+            return finalChatList;
         }
     };
 
@@ -89,5 +90,6 @@ module.exports = async function (params, context, logger) {
         finalChatList = finalChatList.filter(item => !exclude_chats.some(exclude => exclude._id === item._id));
     }
 
+    // logger.info('最终分配的群聊列表', JSON.stringify(finalChatList, null, 2));
     return finalChatList;
 };

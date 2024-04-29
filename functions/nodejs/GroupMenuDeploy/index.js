@@ -2,7 +2,7 @@
 // 如安装 linq 包后就可以引入并使用这个包
 // const linq = require("linq");
 const { convertRecordsToGroupMenu } = require('../GroupMenuUtils/groupMenuConstructor');
-const { batchOperation } = require('../utils');
+const { batchOperation, createLimiter } = require('../utils');
 
 /**
  * @param {Params}  params     自定义参数
@@ -28,7 +28,7 @@ module.exports = async function (params, context, logger) {
         };
     }
 
-    const distributionChatListPromise = faas.function('DeployChatRange').invoke({ deploy_rule: chat_bot.chat_rule });
+    const distributionChatListPromise = faas.function('DeployChatRange').invoke({ deploy_rule: chat_menu_catalog.chat_rule });
 
     const chatMenuRecordsPromise = application.data
         .object('object_chat_menu')
@@ -64,10 +64,7 @@ module.exports = async function (params, context, logger) {
                 throw new Error(`获取群功能菜单失败，群聊${chat_id}，原因：${current_chat_menu.message}`);
             }
 
-            if (current_chat_menu?.code === 0 && current_chat_menu?.data.menu_tree?.chat_menu_top_levels.length === 0) {
-                //当前群没有菜单，可以创建
-                loop_logs += '==> 当前群没有菜单，可以创建\n';
-            } else {
+            if (current_chat_menu?.code === 0 && current_chat_menu?.data.menu_tree?.chat_menu_top_levels?.length > 0) {
                 // 当前群已有菜单，需要先对菜单进行清空
                 let chat_menu = current_chat_menu.data;
                 let delete_res = await faas.function('GroupMenuDelete').invoke({ chat_id, chat_menu });
@@ -101,14 +98,16 @@ module.exports = async function (params, context, logger) {
     const failedList = setMenuResults.filter(item => item.code !== 0);
 
     logger.info(`成功数量 ${successList.length}，失败数量 ${failedList.length}`);
-    logger.info('成功列表', JSON.stringify(successList, null, 2));
-    logger.info('失败列表', JSON.stringify(failedList, null, 2));
+    // logger.info('成功列表', JSON.stringify(successList, null, 2));
+    // logger.info('失败列表', JSON.stringify(failedList, null, 2));
 
     // 根据成功列表准备批量更新数据
     const batchUpdateData = successList.map(item => ({
-        _id: { _id: chatRecordList.find(chat => chat.chat_id === item.chat_id)._id },
-        chat_menu: { _id: chat_menu_catalog._id },
+        _id: chatRecordList.find(chat => chat.chat_id === item.chat_id)._id,
+        chat_catalog: { _id: chat_menu_catalog._id },
     }));
+
+    logger.info('准备批量更新的数据', JSON.stringify(batchUpdateData, null, 2));
 
 
     // // 开始批量创建数据

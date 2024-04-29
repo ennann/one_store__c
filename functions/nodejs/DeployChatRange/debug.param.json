@@ -1,7 +1,7 @@
 {
   "params": {
-    "distribution_rule": {
-      "_id": 1796662368241667
+    "deploy_rule": {
+      "_id": 1796653218113593
     }
   },
   "context": {}
