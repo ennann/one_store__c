@@ -21,14 +21,9 @@ module.exports = async function (params, context, logger) {
   let apaas_group_member_records = await application.data
     .object('object_user_group_member')
     .select(['user_group', 'user'])
-    .where({ user._email: 'liujinxiang.1007@bytedance.com' })
+    .where({ user: 'liujinxiang.1007@bytedance.com' })
     .find();
 
 
 
 }
-=======
->>>>>>> 6ceb7849991eee213a86b74c940ac5c5efb272f0
-=======
-}
->>>>>>> 5059fa18f3cc86cf130642b91bd68444a8194c3d
