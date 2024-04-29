@@ -1,0 +1,32 @@
+{
+  "apiID": "one_store__c__function_aadgf5brr2ces",
+  "apiName": "QueryDepartment",
+  "label": {
+    "zh_CN": "根据部门名称获取部门记录",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "根据部门名称获取部门记录",
+    "en_US": ""
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "department_name",
+      "type": "Text",
+      "label": "部门名称",
+      "required": true,
+      "description": "部门文本名称"
+    }
+  ],
+  "output": [
+    {
+      "key": "department",
+      "type": "Record",
+      "label": "部门记录",
+      "description": "找到的部门记录",
+      "objectApiName": "_department"
+    }
+  ]
+}

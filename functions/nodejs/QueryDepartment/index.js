@@ -10,11 +10,19 @@
  * @return 函数的返回数据
  */
 module.exports = async function (params, context, logger) {
-    // 日志功能
-    // logger.info(`${new Date()} 函数开始执行`);
+  // 日志功能
+  logger.info(`${new Date()} 函数开始执行`, params);
 
-    // 在这里补充业务代码
-    //   测试代码上传
+  if (!params.department_name) {
+    logger.error("传入的部门名称为空");
+    return {department: {} }
+  }
+
+  // 在这里补充业务代码
+  const department = await application.data.object('_department').select('_name', '_manager').where({"_name": params.department_name}).findOne();
+  logger.info(department);
+
+  return { department };
 
 
 }

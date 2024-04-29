@@ -1,0 +1,25 @@
+{
+  "apiID": "one_store__c__function_aadgf33gkgcdi",
+  "apiName": "CreateGroupAuto",
+  "label": {
+    "zh_CN": "创建群时自动生效配置",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "创建群时 使 群置顶、群菜单，群机器人自动生效",
+    "en_US": ""
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "feishu_chat",
+      "type": "Record",
+      "label": "飞书群",
+      "required": true,
+      "description": "飞书群动态配置",
+      "objectApiName": "object_feishu_chat"
+    }
+  ],
+  "output": []
+}
