@@ -45,24 +45,24 @@ module.exports = async function(params, context, logger) {
     // 获取用户信息
     try {
 
-        const id_list = await getUserIdByEmails(emails, logger)
-        logger.info("提取的用户ID列表", { id_list });
-        if (id_list.length == 0) {
+        const userIdList = await getUserIdByEmails(emails, logger)
+        logger.info("提取的用户ID列表", { userIdList });
+        if (userIdList.length == 0) {
             response.code = -1;
             response.message = "移除群成员失败，请确认权限";
             return response;
         }
-        logger.info("提取的用户ID列表", { id_list });
+        logger.info("提取的用户ID列表", { userIdList });
 
-        let add_menger_res = await client.im.chatMembers.delete({
+        let removeMemberRes = await client.im.chatMembers.delete({
             path: { chat_id },
             params: { member_id_type: 'user_id' },
-            data: { id_list }
+            data: { userIdList }
         });
 
-        if (add_menger_res.code !== 0) {
+        if (removeMemberRes.code !== 0) {
             response.code = res.code;
-            response.message = "移除群成员失败: " + add_menger_res.msg;
+            response.message = "移除群成员失败: " + removeMemberRes.msg;
             return response;
         }
 

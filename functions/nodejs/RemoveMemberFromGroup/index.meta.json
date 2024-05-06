@@ -6,8 +6,8 @@
     "en_US": "Remove Member from Group"
   },
   "description": {
-    "zh_CN": "自定义函数",
-    "en_US": "Custom Function"
+    "zh_CN": "将用户移出群聊",
+    "en_US": "Remove a member from a group"
   },
   "longTaskMode": false,
   "frontendSDKInvokable": false,
