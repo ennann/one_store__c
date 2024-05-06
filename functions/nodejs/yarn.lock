@@ -110,10 +110,10 @@
   resolved "https://registry.npmmirror.com/@jorgeferrero/stream-to-buffer/-/stream-to-buffer-2.0.6.tgz#0d0c22f9adb66ce5e3e6a7f7e435407ce6d71675"
   integrity sha512-G7jiBkMwDdYADntdV/qzl9H4Lkch0RyektqXl5+KhktduP4/rE1RaTz0wKZFdC2dKo3S0JaxoUUC3uDeXmI7EQ==
 
-"@larksuiteoapi/node-sdk@1.27.0":
-  version "1.27.0"
-  resolved "https://registry.npmmirror.com/@larksuiteoapi/node-sdk/-/node-sdk-1.27.0.tgz#08d2fbac7cce4d06e5583b8406d09c55d691a3fb"
-  integrity sha512-SfQDxQy+YXGV5c/tbA9tbqO0oCG3Gj6Z8TljLF1HA1Eogi46+5jnTGOnA0ql1q5mr7Bt7MJAnm3xFTbY6BPWfw==
+"@larksuiteoapi/node-sdk@1.28.0":
+  version "1.28.0"
+  resolved "https://registry.npmjs.org/@larksuiteoapi/node-sdk/-/node-sdk-1.28.0.tgz#8b762801c281b783e4faf3292d3b1e04a385952c"
+  integrity sha512-yZIMPIQjYRJ7eluh0W86PuSIRPkQ5Ecr2C2vS0TAbY49OFiSVY4oojEaJ0H8NgHkH3l6pgahXNjdS+1THSefcQ==
   dependencies:
     axios ">=0.27.0 <1.0.0"
     lodash.get "^4.4.2"
@@ -833,10 +833,10 @@ levn@^0.4.1:
     prelude-ls "^1.2.1"
     type-check "~0.4.0"
 
-libphonenumber-js@1.10.60:
-  version "1.10.60"
-  resolved "https://registry.npmmirror.com/libphonenumber-js/-/libphonenumber-js-1.10.60.tgz#1160ec5b390d46345032aa52be7ffa7a1950214b"
-  integrity sha512-Ctgq2lXUpEJo5j1762NOzl2xo7z7pqmVWYai0p07LvAkQ32tbPv3wb+tcUeHEiXhKU5buM4H9MXsXo6OlM6C2g==
+libphonenumber-js@1.10.61:
+  version "1.10.61"
+  resolved "https://registry.npmjs.org/libphonenumber-js/-/libphonenumber-js-1.10.61.tgz#efd350a6283e5d6a804f0cd17dae1f563410241d"
+  integrity sha512-TsQsyzDttDvvzWNkbp/i0fVbzTGJIG0mUu/uNalIaRQEYeJxVQ/FPg+EJgSqfSXezREjM0V3RZ8cLVsKYhhw0Q==
 
 locate-path@^6.0.0:
   version "6.0.0"
