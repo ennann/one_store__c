@@ -1,0 +1,25 @@
+{
+  "apiID": "one_store__c__function_aadghginbbweg",
+  "apiName": "UserInfoChangeEvent",
+  "label": {
+    "zh_CN": "用户信息修改事件",
+    "en_US": "User Info Change Event"
+  },
+  "description": {
+    "zh_CN": "当飞书侧的用户信息发生变化时触发",
+    "en_US": "Triggered when the user information on the Feishu side changes"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "event",
+      "type": "JSON",
+      "label": "事件信息",
+      "required": true,
+      "description": "飞书传过来的事件信息",
+      "schema": { }
+    }
+  ],
+  "output": []
+}

@@ -101,14 +101,15 @@ module.exports = async function (params, context, logger) {
                     try {
                         let image_key = null;
                         // // 处理图标上传
-                        // const file = await context.resources.file.download(feishu_pin.pin_icon);
+                        // const file = await application.resources.file.download(feishu_pin.pin_icon);
+                        // 
                         // const image_key_res = await client.im.image.create({
                         //     data: {
                         //         image_type: 'message',
                         //         image: file,
                         //     },
                         // });
-
+                        // 
                         // if (image_key_res.code === 0) {
                         //     image_key = image_key_res.image_key;
                         // }

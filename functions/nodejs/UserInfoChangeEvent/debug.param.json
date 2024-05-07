@@ -1,0 +1,74 @@
+{
+  "params": {
+    "event": {
+        "event": {
+            "object": {
+                "avatar": {
+                    "avatar_240": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=240x240&cut_type=&quality=&format=png&sticker_format=.webp",
+                    "avatar_640": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=640x640&cut_type=&quality=&format=png&sticker_format=.webp",
+                    "avatar_72": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=72x72&cut_type=&quality=&format=png&sticker_format=.webp",
+                    "avatar_origin": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=noop&cut_type=&quality=&format=png&sticker_format=.webp"
+                },
+                "city": "",
+                "country": "",
+                "department_ids": [
+                    "od-e3f54f43ca478215c32c41370af5a099"
+                ],
+                "employee_no": "",
+                "employee_type": 5,
+                "en_name": "",
+                "enterprise_email": "",
+                "gender": 0,
+                "job_title": "",
+                "join_time": 1692576000,
+                "name": "赵宜哲",
+                "nickname": "",
+                "open_id": "ou_a756e4e91138b7df0387d52fb509eec2",
+                "orders": [
+                    {
+                        "department_id": "od-e3f54f43ca478215c32c41370af5a099",
+                        "department_order": 1,
+                        "is_primary_dept": true,
+                        "user_order": 0
+                    }
+                ],
+                "status": {
+                    "is_activated": true,
+                    "is_exited": false,
+                    "is_frozen": false,
+                    "is_resigned": false,
+                    "is_unjoin": false
+                },
+                "union_id": "on_1e91a76aa1eb9efb7d2ff12fa26ab41d",
+                "user_id": "c18d14ca",
+                "work_station": ""
+            },
+            "old_object": {
+                "department_ids": [
+                    "od-43a156abc763edad2d977934f9988eeb"
+                ],
+                "open_id": "ou_a756e4e91138b7df0387d52fb509eec2",
+                "orders": [
+                    {
+                        "department_id": "od-43a156abc763edad2d977934f9988eeb",
+                        "department_order": 1,
+                        "is_primary_dept": true,
+                        "user_order": 0
+                    }
+                ],
+                "union_id": "on_1e91a76aa1eb9efb7d2ff12fa26ab41d"
+            }
+        },
+        "header": {
+            "app_id": "cli_a6b23873d463100b",
+            "create_time": "1715049346000",
+            "event_id": "b71ef8478dd007876b793cc310be26ac",
+            "event_type": "contact.user.updated_v3",
+            "tenant_key": "10de27cde1ae975d",
+            "token": "xu2L9D********************rCdoGP"
+        },
+        "schema": "2.0"
+    }
+},
+  "context": {}
+}

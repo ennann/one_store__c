@@ -96,8 +96,16 @@ module.exports = async function (params, context, logger) {
             break;
 
         case 'im.message.receive_v1':
+            
             // im.message.receive_v1 消息接收事件，群聊中的 at 或者用户的私聊
             logger.info('本次事件：用户向机器人发送消息事件');
+            break;
+
+        case 'contact.user.updated_v3':
+
+            // contact.user.updated_v3 用户信息更新事件
+            logger.info('本次事件：用户信息更新事件');
+            faas.function("UserInfoChangeEvent").invoke(params?.event);
             break;
 
         default:

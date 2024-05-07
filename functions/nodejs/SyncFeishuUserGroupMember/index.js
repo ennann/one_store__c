@@ -181,67 +181,70 @@ async function updateUserGroupDetails(feishuUserGroup, logger) {
  * @param {Logger} logger Logger for event recording
  */
 async function updateUserGroupMember(feishuUserGroup, logger) {
-    // 创建一个函数，接收 feishuUserGroup 内的元素，作为一个 promise 函数
     const updateGroupMember = async group => {
-        const { _id, member_list } = group;
+        try {
+            const { _id, member_list } = group;
+            let user_id_list = member_list.map(member => member.member_id);
 
-        let user_id_list = member_list.map(member => member.member_id);
-        let user_email_list = await fetchEmailsByUserId(user_id_list);
+            if (user_id_list.length === 0) {
+                logger.info('No user IDs available, skipping operations for', _id);
+                return;
+            }
 
-        const apaas_user_records = [];
-        await application.data
-            .object('_user')
-            .select(['_email', '_id'])
-            .where({ _email: application.operator.in(user_email_list) })
-            .findStream(async records => {
-                apaas_user_records.push(...records);
-            });
-        logger.info('apaas_user_records', apaas_user_records.length);
-        logger.info(apaas_user_records);
+            let user_email_list = await fetchEmailsByUserId(user_id_list);
 
-        // 从飞书用户组成员列表中获取用户在 aPaaS 的 user_id
-        let apaas_user_ids = apaas_user_records.map(record => record._id);
+            if (user_email_list.length === 0) {
+                logger.info('No user emails found, skipping database operations for', _id);
+                return;
+            }
 
-        // 查询当前用户组的所有成员
-        const apaas_group_member_records = [];
-        await application.data
-            .object('object_user_group_member')
-            .select(['user_group', 'user'])
-            .where({ user: application.operator.in(apaas_user_ids), user_group: group._id })
-            .findStream(async records => {
-                apaas_group_member_records.push(...records);
-            });
-        logger.info('apaas_group_member_records', apaas_group_member_records.length);
+            const apaas_user_records = [];
+            await application.data
+                .object('_user')
+                .select(['_email', '_id'])
+                .where({ _email: application.operator.in(user_email_list) })
+                .findStream(records => {
+                    apaas_user_records.push(...records);
+                });
+            logger.info('apaas_user_records', apaas_user_records.length);
 
-        // 1. 删除不在 feishuUserGroup 内的成员，条件为，从 apaas_group_member_records 中找到的记录，不在 apaas_user_ids 内
-        // apaas_group_member_records 结构为 [ {user: { _id: 1212123}} ], apaas_user_ids 结构为 [1212123, 1212123]
-        const batchDeleteRecords = apaas_group_member_records.filter(record => !apaas_user_ids.includes(record.user._id));
+            let apaas_user_ids = apaas_user_records.map(record => record._id);
+            if (apaas_user_ids.length === 0) {
+                logger.info('No aPaaS user IDs found, skipping member deletion and addition for', _id);
+                return;
+            }
 
-        if (batchDeleteRecords.length > 0) {
-            let deleteIds = batchDeleteRecords.map(record => record._id);
-            await batchOperation(logger, 'object_user_group_member', 'batchDelete', deleteIds);
+            const apaas_group_member_records = [];
+            await application.data
+                .object('object_user_group_member')
+                .select(['user_group', 'user'])
+                .where({ user: application.operator.in(apaas_user_ids), user_group: _id })
+                .findStream(records => {
+                    apaas_group_member_records.push(...records);
+                });
+
+            const batchDeleteRecords = apaas_group_member_records.filter(record => !apaas_user_ids.includes(record.user._id));
+            if (batchDeleteRecords.length > 0) {
+                let deleteIds = batchDeleteRecords.map(record => record._id);
+                await batchOperation(logger, 'object_user_group_member', 'batchDelete', deleteIds);
+            }
+
+            let addRecords = apaas_user_ids.filter(user_id => !apaas_group_member_records.some(record => record.user._id === user_id));
+            if (addRecords.length > 0) {
+                let batchCreateRecords = addRecords.map(user_id => ({
+                    user_group: { _id },
+                    user: { _id: apaas_user_records.find(record => record._id === user_id)._id },
+                }));
+                logger.info('开始创建用户组成员数据', JSON.stringify(batchCreateRecords, null, 2));
+                let results = await application.data.object('object_user_group_member').batchCreate(batchCreateRecords);
+                logger.info('用户组成员数据创建完成, results', results);
+            }
+        } catch (error) {
+            logger.error('An error occurred while updating group member details for group ' + group._id, error);
         }
-
-        // 2. 添加新的成员，条件为：
-        // apaas_group_member_records 结构为 [ {user: { _id: 1212123}} ], apaas_user_ids 结构为 [1212123, 1212123]
-        let addRecords = apaas_user_ids.filter(user_id => !apaas_group_member_records.map(record => record.user._id).includes(user_id));
-
-        // 并在最后，将 addRecords 转换为 [ { user_group: { _id: 1212122121 }, user: { _id: 121212212 } } ] 的结构
-        if (addRecords.length > 0) {
-            let batchCreateRecords = addRecords.map(user_id => ({
-                user_group: { _id },
-                user: { _id: apaas_user_records.find(record => record._id === user_id)._id },
-            }));
-
-            logger.info('开始创建用户组成员数据', JSON.stringify(batchCreateRecords, null, 2));
-            let results = await application.data.object('object_user_group_member').batchCreate(batchCreateRecords);
-            logger.info('用户组成员数据创建完成, results', results);
-        }
-
-        logger.info('用户组成员数据更新完成', group);
     };
 
-    // 循环 feishuUserGroup，创建 Promise 数组，然后使用 Promise.all 来执行
     let updateGroupMemberPromises = feishuUserGroup.map(updateGroupMember);
-    await Promise.all(updateGroupMemberPromises);
+    await Promise.all(updateGroupMemberPromises).catch(error => logger.error('Error processing group member updates:', error));
+    logger.info('All group updates processed.');
 }
