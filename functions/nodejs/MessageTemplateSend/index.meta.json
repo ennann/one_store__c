@@ -1,0 +1,39 @@
+{
+    "apiID": "one_store__c__function_aadghhidwtmcs",
+    "apiName": "MessageTemplateSend",
+    "label": {
+        "zh_CN": "发送消息卡片模板",
+        "en_US": "Send Card Message"
+    },
+    "description": {
+        "zh_CN": "向接收方发送消息卡片模板",
+        "en_US": "Send a message card template to the recipient."
+    },
+    "isPublicAPI": false,
+    "frontendSDKInvokable": false,
+    "longTaskMode": false,
+    "input": [
+        {
+            "key": "receiver_type",
+            "type": "Text",
+            "label": "接收方类型",
+            "required": true,
+            "description": "接收方类型，可选值有: open_id | user_id | email | chat_id"
+        },
+        {
+            "key": "receiver_id",
+            "type": "Text",
+            "label": "接收方ID",
+            "required": true,
+            "description": "接收方ID"
+        },
+        {
+            "key": "template_id",
+            "type": "Text",
+            "label": "消息卡片模板ID",
+            "required": true,
+            "description": "消息卡片模板ID"
+        }
+    ],
+    "output": []
+}

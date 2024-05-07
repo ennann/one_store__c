@@ -14,7 +14,6 @@ module.exports = async function (params, context, logger) {
 
     let all_user_group = await fetchFeishuUserGroups(logger);
 
-
     if (!all_user_group || all_user_group.length === 0) {
         logger.error('错误：缺少用户组信息');
         return { code: -1, message: '缺少用户组信息' };
@@ -67,13 +66,13 @@ module.exports = async function (params, context, logger) {
     return feishuUserGroup;
 };
 
+
 /**
  * @description 获取飞书用户组列表
  * @param {*} logger
  * @returns
  */
 async function fetchFeishuUserGroups(logger) {
-
     let client = await newLarkClient({ userId: -1 }, logger);
 
     // Initialize the array to store group data.
@@ -99,6 +98,7 @@ async function fetchFeishuUserGroups(logger) {
     logger.info('查询到的所有群组：', allGroups.length);
     return allGroups;
 }
+
 
 /**
  * @description Update the user group details to apaas database
@@ -171,9 +171,8 @@ async function updateUserGroupDetails(feishuUserGroup, logger) {
     logger.info('用户组数据更新完成, feishuUserGroup', feishuUserGroup);
 
     return feishuUserGroup;
-
-    // 2. 第二步更新用户组成员数据
 }
+
 
 /**
  * @description Update the user group member details to apaas database

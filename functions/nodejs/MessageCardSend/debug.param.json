@@ -1,0 +1,8 @@
+{
+  "params": {
+    "receiver_type": "email",
+    "receiver_id": "zhaoyizhe@bytedance.com",
+    "message_content": {}
+  },
+  "context": {}
+}
