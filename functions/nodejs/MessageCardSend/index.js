@@ -8,8 +8,7 @@ const { newLarkClient } = require('../utils');
  * @return 函数的返回数据
  */
 module.exports = async function (params, context, logger) {
-    
-    const { receiver_type, receiver_id, message_content } = params;
+    const { receiver_type, receiver_id, message_type, message_content } = params;
     const receiveIdTypes = new Set(['open_id', 'user_id', 'email', 'chat_id']);
 
     // 判断 receiver_type 是否合法
@@ -19,9 +18,9 @@ module.exports = async function (params, context, logger) {
     }
 
     // 判断 receiver_id 和 message_content 是否为空
-    if (!receiver_id || !message_content) {
+    if (!receiver_id || !message_type || !message_content) {
         logger.error(
-            `receiver_id 或 message_content 不能为空. Received - receiver_id: ${receiver_id}, message_content: ${message_content}`,
+            `receiver_id 或 message_content 不能为空. Received - receiver_id: ${receiver_id}, message_type: ${message_type}, message_content: ${message_content}`,
         );
         return { code: -1, receiver_id, message: 'receiver_id 或 message_content 不能为空' };
     }
@@ -35,7 +34,7 @@ module.exports = async function (params, context, logger) {
             },
             data: {
                 receive_id: receiver_id,
-                msg_type: 'interactive',
+                msg_type: message_type, // text interactive
                 content: message_content,
             },
         });

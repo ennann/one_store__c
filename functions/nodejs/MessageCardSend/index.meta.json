@@ -29,11 +29,11 @@
         },
         {
             "key": "message_content",
-            "type": "Record",
+            "type": "JSON",
             "label": "消息卡片内容",
-            "required": false,
+            "required": true,
             "description": "",
-            "objectApiName": "object_chat_message_def"
+            "schema": {}
         }
     ],
     "output": []

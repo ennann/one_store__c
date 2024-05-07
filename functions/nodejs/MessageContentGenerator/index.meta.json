@@ -1,0 +1,25 @@
+{
+    "apiID": "one_store__c__function_aadghhs6vlicy",
+    "apiName": "MessageContentGenerator",
+    "label": {
+        "zh_CN": "消息卡片内容生成",
+        "en_US": "Message Content Generator"
+    },
+    "description": {
+        "zh_CN": "根据消息定义对象记录，生成消息卡片内容",
+        "en_US": "Generate message card content based on message definition records"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "message_def",
+            "type": "Record",
+            "label": "消息定义记录",
+            "required": true,
+            "description": "消息定义记录",
+            "objectApiName": "object_chat_message_def"
+        }
+    ],
+    "output": []
+}

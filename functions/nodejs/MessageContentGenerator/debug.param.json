@@ -1,0 +1,128 @@
+{
+    "params": {
+        "message_def": {
+            "_createdAt": 1715050013147,
+            "_createdBy": {
+                "_id": 1798281554498611,
+                "_name": [
+                    {
+                        "language_code": 2052,
+                        "text": "赵宜哲"
+                    }
+                ],
+                "avatar": {
+                    "color": null,
+                    "color_id": null,
+                    "content": null,
+                    "image": {
+                        "large": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=noop&cut_type=&quality=&format=png&sticker_format=.webp"
+                    },
+                    "source": "image"
+                },
+                "i18n_name": [
+                    {
+                        "language_code": 2052,
+                        "text": "赵宜哲"
+                    }
+                ],
+                "id": 1798281554498611,
+                "is_deleted": false,
+                "name": "赵宜哲"
+            },
+            "_id": 1798355396400164,
+            "_isDeleted": false,
+            "_name": [
+                {
+                    "language_code": 2052,
+                    "text": "消息定义01"
+                }
+            ],
+            "_objectId": 1798280639378432,
+            "_updatedAt": 1715074049630,
+            "_updatedBy": {
+                "_id": 1798281554498611,
+                "_name": [
+                    {
+                        "language_code": 2052,
+                        "text": "赵宜哲"
+                    }
+                ],
+                "avatar": {
+                    "color": null,
+                    "color_id": null,
+                    "content": null,
+                    "image": {
+                        "large": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=noop&cut_type=&quality=&format=png&sticker_format=.webp"
+                    },
+                    "source": "image"
+                },
+                "i18n_name": [
+                    {
+                        "language_code": 2052,
+                        "text": "赵宜哲"
+                    }
+                ],
+                "id": 1798281554498611,
+                "is_deleted": false,
+                "name": "赵宜哲"
+            },
+            "boolean_public_now": true,
+            "chat_rule": {
+                "_id": 1798379060999220,
+                "_name": [
+                    {
+                        "language_code": 2052,
+                        "text": "1798379060999220"
+                    }
+                ],
+                "i18n_name": [
+                    {
+                        "language_code": 2052,
+                        "text": "1798379060999220"
+                    }
+                ],
+                "id": 1798379060999220,
+                "is_deleted": false,
+                "name": "1798379060999220"
+            },
+            "datetime_publish": null,
+            "effective_time": null,
+            "exe_count": 0,
+            "expiration_time": null,
+            "is_workday_support": true,
+            "message_richtext": {
+                "config": [
+                    {
+                        "resourceId": "BIZ_3904e5732957426cbe935769f9472c2d",
+                        "resourceType": "img",
+                        "token": "BIZ_3904e5732957426cbe935769f9472c2d"
+                    }
+                ],
+                "preview": "",
+                "raw": "<div style=\"white-space: pre-wrap;\">这是一个普通文本</div><div style=\"white-space: pre-wrap;\"><b>这是一个加粗文本</b></div><div style=\"white-space: pre-wrap;\"><span style=\"color: rgb(245, 74, 69);\">这是一个带颜色的文本</span></div><div style=\"white-space: pre-wrap;\">下面是一个图片</div><div style=\"white-space: pre-wrap;\"></div><div style=\"white-space: pre-wrap;\"><img src=\"/ui/attachment?token=73689c96fcc2497b9f008d4aab0a6dd8&amp;preview=true&amp;imgId=BIZ_3904e5732957426cbe935769f9472c2d\" alt=\"one_store.png\"></div><div style=\"white-space: pre-wrap;\"></div>"
+            },
+            "message_template": {
+                "_id": 1798370803487772,
+                "_name": "DHID23123",
+                "id": 1798370803487772,
+                "is_deleted": false,
+                "name": "DHID23123"
+            },
+            "message_template_id": "DHID23123",
+            "message_title": null,
+            "option_message_type": "option_video",
+            "option_send_method": "option_onetime",
+            "option_status": "option_enable",
+            "option_time_cycle": "option_week",
+            "publish_department": null,
+            "publisher": null,
+            "repetition_rate": "3",
+            "send_channel": "",
+            "title": "消息定义01",
+            "user_rule": null,
+            "video_content": "这是一段视频",
+            "video_url": " https://v.douyin.com/iY7EYPs2 "
+        }
+    },
+    "context": {}
+}

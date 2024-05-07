@@ -1,0 +1,16 @@
+{
+  "apiID": "one_store__c__function_aadghhr36d4pi",
+  "apiName": "MessageDeploy",
+  "label": {
+    "zh_CN": "Message Deploy",
+    "en_US": "Message Deploy"
+  },
+  "description": {
+    "zh_CN": "自定义函数",
+    "en_US": "Custom Function"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": []
+}
