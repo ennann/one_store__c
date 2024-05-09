@@ -1,4 +1,9 @@
 {
-  "params": {},
+  "params": {
+    "chat_id": "oc_78f9662917469bf7ecbd8b25527b58f5",
+    "open_ids": [
+      "ou_a48c0dba8b86d1e639962ce7d36cd39a"
+    ]
+  },
   "context": {}
 }

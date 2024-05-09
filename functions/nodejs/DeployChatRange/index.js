@@ -55,21 +55,21 @@ module.exports = async function (params, context, logger) {
 
     // 获取全部群
     if (deployRuleRecord.all_chats && deployRuleRecord.all_chats === 'option_yes') {
-        let all_chats = await fetchChatRecords({ chat_id: application.operator.notEmpty() }, '全部');
+        let all_chats = await fetchChatRecords({ chat_id: application.operator.notEmpty(),chat_status:"option_02"}, '全部');
         finalChatList.push(...all_chats);
     }
 
     // 获取部门下的群
     if (deployRuleRecord.department && deployRuleRecord.department.length > 0) {
         let department_ids = deployRuleRecord.department.map(item => item._id);
-        let department_chats = await fetchChatRecords({ department: application.operator.hasAnyOf(department_ids) }, '部门');
+        let department_chats = await fetchChatRecords({ department: application.operator.hasAnyOf(department_ids),chat_status:"option_02" }, '部门');
         finalChatList.push(...department_chats);
     }
 
     // 获取标签下的群
     if (deployRuleRecord.chat_tag && deployRuleRecord.chat_tag.length > 0) {
         let chat_tag_record_ids = deployRuleRecord.chat_tag.map(item => item._id);
-        let chat_tag_chats = await fetchChatRecords({ chat_tag: application.operator.hasAnyOf(chat_tag_record_ids) }, '群标签');
+        let chat_tag_chats = await fetchChatRecords({ chat_tag: application.operator.hasAnyOf(chat_tag_record_ids),chat_status:"option_02" }, '群标签');
         finalChatList.push(...chat_tag_chats);
     }
 
@@ -86,7 +86,7 @@ module.exports = async function (params, context, logger) {
     // 获取需要排除的群
     if (deployRuleRecord.exclude_chat && deployRuleRecord.exclude_chat.length > 0) {
         let exclude_chat_ids = deployRuleRecord.exclude_chat.map(item => item._id);
-        let exclude_chats = await fetchChatRecords({ _id: application.operator.in(exclude_chat_ids) }, '排除的群聊');
+        let exclude_chats = await fetchChatRecords({ _id: application.operator.in(exclude_chat_ids),chat_status:"option_02" }, '排除的群聊');
         finalChatList = finalChatList.filter(item => !exclude_chats.some(exclude => exclude._id === item._id));
     }
 

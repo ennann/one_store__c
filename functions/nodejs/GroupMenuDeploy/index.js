@@ -115,10 +115,12 @@ module.exports = async function (params, context, logger) {
         await batchOperation(logger, "object_feishu_chat", "batchUpdate", batchUpdateData);
         logger.info('批量更新群菜单字段完成');
     }
-
+    if (failedList.length>0){
+        throw new Error(`分发群菜单失败，请联系管理员！`);
+    }
     return {
         code: successList.length > 0 ? 0 : -1,
-        message: '群机器人分发完成',
+        message: '批量更新群菜单字段完成',
         data: {
             success_count: successList.length,
             success_list: successList,

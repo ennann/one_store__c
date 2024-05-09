@@ -12,6 +12,14 @@
   "isPublicAPI": false,
   "frontendSDKInvokable": true,
   "longTaskMode": false,
-  "input": [],
+  "input": [
+    {
+      "key": "chat_id",
+      "type": "Text",
+      "label": "chat_id",
+      "required": true,
+      "description": ""
+    }
+  ],
   "output": []
 }

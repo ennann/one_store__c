@@ -3,20 +3,21 @@
   "apiName": "SetUserAsGroupAdmin",
   "label": {
     "zh_CN": "设置群管理员",
-    "en_US": ""
+    "en_US": null
   },
   "description": {
-    "zh_CN": "自定义函数",
+    "zh_CN": "非门店经营群设置群管理员",
     "en_US": "Custom Function"
   },
-  "longTaskMode": false,
+  "isPublicAPI": false,
   "frontendSDKInvokable": false,
+  "longTaskMode": false,
   "input": [
     {
       "key": "object_feishu_chat",
       "type": "Record",
-      "label": "飞书群数据",
       "required": true,
+      "label": "飞书群数据",
       "description": "",
       "objectApiName": "object_feishu_chat"
     }

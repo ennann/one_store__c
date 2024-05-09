@@ -18,7 +18,8 @@ module.exports = async function (params, context, logger) {
     }
 
     // 获取群置顶的群聊ID
-    const chatRecordList = await faas.function('GroupTabDeployRange').invoke({ chat_tab_deploy_range: chat_pin });
+    // const chatRecordList = await faas.function('GroupTabDeployRange').invoke({ chat_tab_deploy_range: chat_pin });
+    const chatRecordList = await faas.function('DeployChatRange').invoke({ deploy_rule: chat_pin.chat_rule });
     const chatIdList = chatRecordList.map(item => item.chat_id);
     logger.info('根据群置顶规则获取到的群ID列表为', chatIdList);
 

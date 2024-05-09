@@ -3,27 +3,28 @@
   "apiName": "CreateChatAdmin",
   "label": {
     "zh_CN": "创建群管理员",
-    "en_US": ""
+    "en_US": null
   },
   "description": {
-    "zh_CN": "设置群管理员，",
+    "zh_CN": "创建群管理员",
     "en_US": "Custom Function"
   },
-  "longTaskMode": false,
+  "isPublicAPI": false,
   "frontendSDKInvokable": false,
+  "longTaskMode": false,
   "input": [
     {
       "key": "chat_id",
       "type": "Text",
-      "label": "群组ID",
       "required": true,
+      "label": "群组ID",
       "description": ""
     },
     {
       "key": "open_ids",
       "type": "List",
-      "label": "用户open_id集合",
       "required": true,
+      "label": "用户open_id集合",
       "description": "",
       "listItem": {
         "type": "Text"

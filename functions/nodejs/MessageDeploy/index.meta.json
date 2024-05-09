@@ -6,11 +6,12 @@
     "en_US": "Message Deploy"
   },
   "description": {
-    "zh_CN": "自定义函数",
+    "zh_CN": "消息定义分发",
     "en_US": "Custom Function"
   },
-  "longTaskMode": false,
+  "isPublicAPI": false,
   "frontendSDKInvokable": false,
+  "longTaskMode": false,
   "input": [],
   "output": []
 }

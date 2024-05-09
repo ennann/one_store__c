@@ -105,6 +105,10 @@ module.exports = async function (params, context, logger) {
     const createRelationResults = await Promise.all(batchCreateData.map(data => create_pin_chat_relation(data)));
     logger.info('创建群置顶和群的关系结果', JSON.stringify(createRelationResults, null, 2));
 
+    if (failedList.length>0){
+        throw new Error(`分发群菜单失败，请联系管理员！`);
+    }
+
     return {
         code: successList.length > 0 ? 0 : -1,
         message: '群置顶分发完成',

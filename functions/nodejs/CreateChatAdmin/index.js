@@ -1,7 +1,7 @@
 // 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
 // 如安装 linq 包后就可以引入并使用这个包
 // const linq = require("linq");
-
+const { newLarkClient } = require('../utils');
 /**
  * @param {Params}  params     自定义参数
  * @param {Context} context    上下文参数，可通过此参数下钻获取上下文变量信息等
@@ -44,7 +44,7 @@ module.exports = async function (params, context, logger) {
         chat_id: chat_id,
       },
       params: {
-        member_id_type: 'open_id',
+        member_id_type: 'user_id',
       },
       data: {
         manager_ids: open_ids,
@@ -58,8 +58,8 @@ module.exports = async function (params, context, logger) {
   }
 
   if (set_chat_admin_res.code !== 0) {
-    logger.error("API返回错误", set_chat_admin_res);
-    response.code = set_chat_admin_res.code;
+    logger.error("API返回错误", JSON.stringify(set_chat_admin_res, null, 2));
+    response.code = -2;
     response.message = "设置聊天管理员失败";
     return response;
   }

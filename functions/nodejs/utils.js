@@ -102,6 +102,36 @@ async function getUserIdByEmails(emails, logger) {
 }
 
 /**
+ * @description 根据用户邮箱获取开放平台的 open_id
+ * @param emails
+ * @param mobiles
+ * @param logger
+ * @return {Promise<*[]>}
+ */
+async function getOpenIdByEmailsOrMobiles(emails,mobiles, logger) {
+    const client = await newLarkClient({ userId: 0 }, logger);
+    try {
+        let user_info = await client.contact.user.batchGetId({
+            params: { user_id_type: 'open_id' },
+            data: {
+                emails: emails,
+                mobiles: mobiles,
+                include_resigned: true,
+            },
+        });
+
+        if (user_info.code !== 0) {
+            logger.error('查询用户信息失败user_info：'+user_info);
+            return [];
+        }
+        return user_info;
+    } catch (e) {
+        logger.error('查询用户信息失败e：'+e);
+        return [];
+    }
+}
+
+/**
  * 根据邮箱或手机号获取单个 aPaaS 用户
  *
  * @param {{ email: string; mobile: string }} params
@@ -300,6 +330,7 @@ module.exports = {
     newLarkClient,
     createLimiter,
     getUserIdByEmails,
+    getOpenIdByEmailsOrMobiles,
     getaPaaSUser,
     getaPaaSUsers,
     getUserByOpenId,
