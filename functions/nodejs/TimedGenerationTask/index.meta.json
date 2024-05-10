@@ -1,0 +1,16 @@
+{
+  "apiID": "one_store__c__function_aadghx6fh4ady",
+  "apiName": "TimedGenerationTask",
+  "label": {
+    "zh_CN": "定时生成任务",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "跟进任务定义，创建相应的任务",
+    "en_US": ""
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": []
+}
