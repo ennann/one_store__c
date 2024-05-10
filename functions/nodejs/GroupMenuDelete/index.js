@@ -36,12 +36,11 @@ module.exports = async function (params, context, logger) {
     } else {
         // 如果未提供chat_menu，从系统中获取现有菜单并删除
         try {
-            let current_chat_menu = await client.function('GroupMenuFetch').invoke({ chat_id });
+            let current_chat_menu = await faas.function('GroupMenuFetch').invoke({ chat_id:chat_id });
             if (!current_chat_menu || current_chat_menu.code !== 0) {
                 return { code: 400, msg: '获取现有群菜单失败，无法删除' };
             }
-
-            const chat_menu_top_level_ids = current_chat_menu.menu_tree.chat_menu_top_levels.map(item => item.chat_menu_top_level_id);
+            const chat_menu_top_level_ids = current_chat_menu.data.menu_tree.chat_menu_top_levels.map(item => item.chat_menu_top_level_id);
             return deleteGroupMenu(client, chat_id, chat_menu_top_level_ids);
         } catch (error) {
             return { code: 500, msg: '在获取现有群菜单时出错: ' + error.message };

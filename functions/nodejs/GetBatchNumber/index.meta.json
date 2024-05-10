@@ -1,0 +1,26 @@
+{
+  "apiID": "one_store__c__function_aadghsxjkjkay",
+  "apiName": "GetBatchNumber",
+  "label": {
+    "zh_CN": "获取批次号",
+    "en_US": null
+  },
+  "description": {
+    "zh_CN": "根据消息定义，获取对应递增批次号",
+    "en_US": "Custom Function"
+  },
+  "isPublicAPI": false,
+  "frontendSDKInvokable": false,
+  "longTaskMode": false,
+  "input": [
+    {
+      "key": "object_chat_message_def",
+      "type": "Record",
+      "required": true,
+      "label": "消息定义",
+      "description": "",
+      "objectApiName": "object_task_def"
+    }
+  ],
+  "output": []
+}

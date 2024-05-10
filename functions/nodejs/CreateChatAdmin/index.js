@@ -20,50 +20,51 @@ module.exports = async function (params, context, logger) {
     message: ""
   }
 
-  const { chat_id,open_ids } = params;
+  const { chat_id, open_ids: manager_ids } = params;
+
+  logger.info({ params })
 
   const client = await newLarkClient({ userId: context.user._id }, logger);
   
-  if (!params.chat_id) {
-    logger.error("群组ID为空");
+  if (!chat_id) {
     response.code = -1;
     response.message = "群组ID缺失，无法继续执行";
-    return response;
+    logger.error("群组ID缺失，无法继续执行");
+    throw new Error("群组ID缺失，无法继续执行");
   }
-  if (!params.open_ids) {
-    logger.error("管理员ID为空");
+  if (!manager_ids || manager_ids.length === 0) {
     response.code = -1;
     response.message = "管理员ID缺失，无法继续执行";
-    return response;
+    logger.error("群组ID缺失，无法继续执行");
+    throw new Error("群组ID缺失，无法继续执行");
   }
-  let set_chat_admin_res;
+
   try{
+    // 获取群成员
+    // const res = await client.im.chatMembers.get({
+    //   path: { chat_id },
+    //   params: { member_id_type: 'open_id' },
+    // })
+    // logger.info({res})
     //创建群管理员
-    set_chat_admin_res = client.im.chatManagers.addManagers({
-      path: {
-        chat_id: chat_id,
-      },
-      params: {
-        member_id_type: 'user_id',
-      },
-      data: {
-        manager_ids: open_ids,
-      },
+    const set_chat_admin_res = await client.im.chatManagers.addManagers({
+      path: { chat_id },
+      params: { member_id_type: 'open_id' },
+      data: { manager_ids },
     })
+    if (set_chat_admin_res.code !== 0) {
+      logger.error("API返回错误", JSON.stringify(set_chat_admin_res, null, 2));
+      response.code = -2;
+      response.message = "设置群管理员失败";
+      throw new Error("设置群管理员失败");
+    }else{
+      response.message = "设置群管理员成功";
+      return response;
+    }
   }catch (error) {
     logger.error("设置群管理员失败", error);
     response.code = -1;
     response.message = "设置群管理员失败";
-    return response;
+    throw new Error("设置群管理员失败");
   }
-
-  if (set_chat_admin_res.code !== 0) {
-    logger.error("API返回错误", JSON.stringify(set_chat_admin_res, null, 2));
-    response.code = -2;
-    response.message = "设置聊天管理员失败";
-    return response;
-  }
-
-  response.message = "设置群管理员成功";
-  return response;
 }

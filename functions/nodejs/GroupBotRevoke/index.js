@@ -79,7 +79,7 @@ module.exports = async function (params, context, logger) {
         .findStream(async records => {
             batchDeleteIds.push(...records.map(item => item._id));
         });
-    logger.info('找到的机器人关系列表', bot_chat_relations);
+    // logger.info('找到的机器人关系列表', bot_chat_relations);
 
     if (batchDeleteIds.length > 0) {
         batchOperation(logger, 'object_chat_pin_relation', 'batchDelete', batchDeleteIds);

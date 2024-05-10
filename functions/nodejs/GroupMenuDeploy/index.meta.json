@@ -10,7 +10,7 @@
     "en_US": "Batch deploy group menu according to group menu rules"
   },
   "isPublicAPI": false,
-  "frontendSDKInvokable": true,
+  "frontendSDKInvokable": false,
   "longTaskMode": false,
   "input": [
     {

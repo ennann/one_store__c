@@ -11,6 +11,14 @@
   },
   "longTaskMode": false,
   "frontendSDKInvokable": false,
-  "input": [],
+  "input": [
+    {
+      "key": "chat_id",
+      "type": "Text",
+      "required": true,
+      "label": "群组ID",
+      "description": ""
+    }
+  ],
   "output": []
 }

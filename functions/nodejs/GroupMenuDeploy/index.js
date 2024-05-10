@@ -27,13 +27,15 @@ module.exports = async function (params, context, logger) {
             message: '错误：缺少菜单目录信息，请确认传入的参数是否正确',
         };
     }
-
+    //删除已分发的apass飞书群记录
+    await deleteFeiShuGroupMenu(chat_menu_catalog,logger);
     const distributionChatListPromise = faas.function('DeployChatRange').invoke({ deploy_rule: chat_menu_catalog.chat_rule });
 
     const chatMenuRecordsPromise = application.data
         .object('object_chat_menu')
         .select(['_id', 'menu_catalog', 'name', 'menu_link', 'mobile_link', 'parent_menu'])
         .where({ menu_catalog: chat_menu_catalog._id || chat_menu_catalog.id })
+        .orderBy("bigint_08e8b5a61dd")
         .find();
 
     // 获取分配的群聊列表和需要分配的菜单数据
@@ -128,4 +130,23 @@ module.exports = async function (params, context, logger) {
             failed_list: failedList,
         },
     };
+};
+
+const deleteFeiShuGroupMenu = async (chat_menu_catalog,logger) => {
+    try {
+        //获取群菜单历史分发群
+        const result = await application.data.object('object_feishu_chat').select('_id').where({chat_catalog:{_id:chat_menu_catalog._id}}).find();
+        // 根据成功列表准备批量更新数据
+        const batchUpdateData = result.map(item => ({
+            _id: item._id,
+            chat_catalog: null,
+        }));
+        // // 开始批量创建数据
+        if (batchUpdateData.length > 0) {
+            await batchOperation(logger, "object_feishu_chat", "batchUpdate", batchUpdateData);
+            logger.info('批量更新飞书群菜单字段完成');
+        }
+    } catch (error) {
+        logger.error('批量更新飞书群菜单字段完失败：'+error);
+    }
 };
