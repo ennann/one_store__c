@@ -1,0 +1,32 @@
+{
+  "apiID": "one_store__c__function_aadghxtkqeabs",
+  "apiName": "GetTaskBatchNumber",
+  "label": {
+    "zh_CN": "获取任务定义批次号",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "根据任务定义，获取对应递增批次号",
+    "en_US": ""
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "object_task_def",
+      "type": "Record",
+      "label": "任务定义",
+      "required": true,
+      "description": "",
+      "objectApiName": "object_task_def"
+    }
+  ],
+  "output": [
+    {
+      "key": "batch_no",
+      "type": "Text",
+      "label": "批次号",
+      "description": ""
+    }
+  ]
+}

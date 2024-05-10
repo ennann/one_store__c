@@ -13,15 +13,16 @@ const { newLarkClient } = require('../utils');
 module.exports = async function (params, context, logger) {
   const { chat_id } = params
   const client = await newLarkClient({ userId: context.user._id }, logger);
-
-  try {
-    const res = await client.im.chat.delete({
-      path: { chat_id },
-    })
-    logger.info({ res });
-    return res;
-  } catch (error) {
-    logger.error(error);
-    throw new Error(error);
-  }
+  const {appAccessToken} = await application.integration.getDefaultAppAccessToken();
+  logger.info({res})
+  // try {
+  //   const res = await client.im.chat.delete({
+  //     path: { chat_id },
+  //   })
+  //   logger.info({ res });
+  //   return res;
+  // } catch (error) {
+  //   logger.error(error);
+  //   throw new Error(error);
+  // }
 }

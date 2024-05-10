@@ -31,7 +31,7 @@ module.exports = async function (params, context, logger) {
     pin_url = pin_url.replace(/[\n\s]/g, '');
 
     const client = await newLarkClient({ userId: context.user._id }, logger);
-
+    // deleteFeiShuGroupTab(chat_pin, logger)
     // 定义将置顶信息添加到群聊的函数
     const addPinToChat = async (chat_id) => {
         try {
@@ -119,4 +119,13 @@ module.exports = async function (params, context, logger) {
             failed_list: failedList,
         },
     };
+};
+const deleteFeiShuGroupTab = async (chat_pin,logger) => {
+    try {
+        logger.info('批量删除飞书群置顶入参->',chat_pin);
+        const result = await faas.function('GroupTabRevoke').invoke({chat_pin: chat_pin});
+        logger.info('批量删除飞书群置顶结果->',result);
+    } catch (error) {
+        logger.error('批量删除飞书群置顶失败->'+error);
+    }
 };

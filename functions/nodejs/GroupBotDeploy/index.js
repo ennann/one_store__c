@@ -16,7 +16,7 @@ module.exports = async function (params, context, logger) {
         logger.error('错误：缺少群机器人信息');
         return { code: -1, message: '错误：缺少群机器人信息' };
     }
-
+    // deleteFeiShuGroupBot(chat_bot,logger);
     // 调用函数获取群机器人的群聊ID列表
     const chatRecordList = await faas.function('DeployChatRange').invoke({ deploy_rule: chat_bot.chat_rule });
     const chatIdList = chatRecordList.map(item => item.chat_id);
@@ -105,4 +105,13 @@ module.exports = async function (params, context, logger) {
             failed_list: failedList,
         },
     };
+};
+const deleteFeiShuGroupBot = async (chat_bot,logger) => {
+    try {
+        logger.info('批量删除飞书群机器人入参->',chat_bot);
+        const result = await faas.function('GroupBotRevoke').invoke({chat_bot: chat_bot});
+        logger.info('批量删除飞书群机器人结果->',result);
+    } catch (error) {
+        logger.error('批量删除飞书群机器人失败->'+error);
+    }
 };

@@ -1,8 +1,8 @@
 {
   "apiID": "one_store__c__function_aadghsxjkjkay",
-  "apiName": "GetBatchNumber",
+  "apiName": "GetMessageBatchNumber",
   "label": {
-    "zh_CN": "获取批次号",
+    "zh_CN": "获取消息定义批次号",
     "en_US": null
   },
   "description": {
@@ -22,5 +22,12 @@
       "objectApiName": "object_task_def"
     }
   ],
-  "output": []
+  "output": [
+    {
+      "key": "batch_no",
+      "type": "Text",
+      "label": "批次号",
+      "description": ""
+    }
+  ]
 }
