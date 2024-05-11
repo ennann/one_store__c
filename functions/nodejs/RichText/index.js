@@ -1,7 +1,6 @@
 // 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
 // 如安装 linq 包后就可以引入并使用这个包
 // const linq = require("linq");
-const { newLarkClient } = require('../utils');
 
 /**
  * @param {Params}  params     自定义参数
@@ -11,16 +10,14 @@ const { newLarkClient } = require('../utils');
  * @return 函数的返回数据
  */
 module.exports = async function (params, context, logger) {
-  const { chat_id } = params
-  const client = await newLarkClient({ userId: context.user._id }, logger);
-  try {
-    const res = await client.im.chat.delete({
-      path: { chat_id },
-    })
-    logger.info({ res });
-    return res;
-  } catch (error) {
-    logger.error(error);
-    throw new Error(error);
-  }
+  // 日志功能
+  logger.info(`${new Date()} 函数开始执行`, params);
+
+  // 在这里补充业务代码
+
+  logger.info(params.richtext)
+
+
+  return { richtext: params.richtext }
+
 }

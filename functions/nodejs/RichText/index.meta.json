@@ -1,0 +1,31 @@
+{
+  "apiID": "one_store__c__function_aadgh4nwazocw",
+  "apiName": "RichText",
+  "label": {
+    "zh_CN": "获取富文本",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "自定义函数",
+    "en_US": "Custom Function"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "richtext",
+      "type": "RichText",
+      "label": "富文本",
+      "required": true,
+      "description": ""
+    }
+  ],
+  "output": [
+    {
+      "key": "richtext",
+      "type": "RichText",
+      "label": "处理后的富文本",
+      "description": "处理后的富文本"
+    }
+  ]
+}
