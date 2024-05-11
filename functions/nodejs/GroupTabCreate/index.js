@@ -45,7 +45,7 @@ module.exports = async function (params, context, logger) {
     try {
         // 处理图标上传
         if (pin_icon && pin_icon.length > 0 && pin_icon[0]) {
-            let file = await context.resources.file.download(pin_icon[0]);
+            let file = await application.resources.file.download(pin_icon[0]);
             let image_key_res = await client.im.image.create({
                 data: {
                     image_type: 'message',
