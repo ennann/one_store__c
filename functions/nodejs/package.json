@@ -6,6 +6,7 @@
     "@byted-apaas/server-sdk-node": "1.1.14",
     "@larksuiteoapi/node-sdk": "1.28.0",
     "bottleneck": "^2.19.5",
+    "dayjs": "^1.11.11",
     "libphonenumber-js": "1.10.61",
     "lodash": "4.17.21",
     "qs": "6.12.1",

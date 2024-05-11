@@ -7,7 +7,7 @@
       "skipFiles": [
         "<node_internals>/**",
         "${workspaceFolder}/.kldx/**",
-        "${workspaceFolder}/functions\\nodejs//node_modules/**",
+        "${workspaceFolder}/functions/nodejs//node_modules/**",
         "${workspaceFolder}/.ae/**"
       ],
       "preLaunchTask": "PrepareDebugTask",
