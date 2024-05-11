@@ -19,26 +19,14 @@ module.exports = async function (params, context, logger) {
     }
     // 在这里补充业务代码
     const {object_task_def} = params;
-<<<<<<< HEAD
     logger.info('任务定义', JSON.stringify(object_task_def, null, 2));
     if (!object_task_def){
         response.code = -1 ;
-=======
-    if (!object_task_def){
-        response.code = -1 ;
-        response.batch_no = "000001"
->>>>>>> 3429f7c (更新远端分支与 git 保持一致)
         response.message = "缺少必要参数：任务定义数据";
     }
     let oldVar = await application.data.object('object_task_create_monitor').select('_id', 'batch_no').where({ 'task_def': object_task_def }).find();
     const length = oldVar.length + 1 ;
     const newBatchNo =  1000000 + length
     response.batch_no = newBatchNo.toString().substring(1);
-<<<<<<< HEAD
     return response;
 }
-=======
-    logger.info("批次好获取成功-->",response);
-    return response;
-}
->>>>>>> 3429f7c (更新远端分支与 git 保持一致)
