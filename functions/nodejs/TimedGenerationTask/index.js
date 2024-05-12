@@ -13,27 +13,20 @@ module.exports = async function (params, context, logger) {
     // 日志功能
     logger.info(`定时生成任务记录函数开始执行 ${new Date()}`);
 
-    // 日志功能
-    logger.info(`定时生成任务记录函数开始执行 ${new Date()}`);
-
     //一次性非立即发布任务
     const query = {
-        option_status: 'option_02', //启用
+        option_status: 'option_02' //启用状态
     };
 
     //获取符合条件的任务定义记录列表
-    let finalTaskDefList = await fetchTaskDefRecords(query, '一次性非立即发布任务');
+    let finalTaskDefList = await fetchTaskDefRecords(query, '一次性非立即发布任务',logger);
 
     if (finalTaskDefList.length === 0) {
         logger.warn('查询满足条件的一次性非立即发布任务记录为0');
         return { code: -2, message: '未找到有效的任务定义记录' };
     }
-
-
     // 为每个任务定义实例记录生成任务批次号并创建任务处理记录
     const taskCreateResults = await Promise.all(finalTaskDefList.map(task => createTaskMonitorEntry(task, logger)));
-
-
     const successfulTasks = taskCreateResults.filter(result => result.code === 0);
     const failedTasks = taskCreateResults.filter(result => result.code !== 0);
 
@@ -53,7 +46,7 @@ module.exports = async function (params, context, logger) {
 
 
 
-const fetchTaskDefRecords = async (query, description) => {
+const fetchTaskDefRecords = async (query, description,logger) => {
     try {
         const taskRecords = [];
         await application.data
