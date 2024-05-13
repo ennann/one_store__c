@@ -197,6 +197,7 @@ async function createStoreTaskEntry(task, logger) {
             //创建限流器
             const limitedsendFeishuMessage = createLimiter(sendFeishuMessage);
             //发送飞书卡片消息
+            logger.info("messageCardSendDatas---->",JSON.stringify(messageCardSendDatas,null,2))
             const sendFeishuMessageResults = await Promise.all(messageCardSendDatas.map(messageCardSendData => limitedsendFeishuMessage(messageCardSendData)));
 
             const sendFeishuMessageSuccess = sendFeishuMessageResults.filter(result => result.code === 0);
@@ -277,9 +278,12 @@ async function createStoreTaskEntryStart(task, logger) {
                 data.receive_id = feishuChat.chat_id
             } else {
                 data.receive_id_type = "email"
-                data.receive_id = task.deal_user._email
+                const feishuPeople = await application.data.object('_user')
+                    .select('_id', '_email')
+                    .where({_id: task.task_handler._id}).findOne();
+                data.receive_id = feishuPeople._email
             }
-            return {code: 0, message: '创建门店普通任务成功', storeTaskId: storeTaskId, messageCardSendData: data};
+            return {code: 0, message: '创建门店普通任务成功', storeTaskId: storeTaskId._id, messageCardSendData: data};
         } catch (error) {
             logger.error(`组装门店普通任务[${task}]发送消息发片失败-->`, error);
         }
@@ -292,9 +296,9 @@ async function createStoreTaskEntryStart(task, logger) {
 const sendFeishuMessage = async (messageCardSendData) => {
     try {
         await faas.function('MessageCardSend').invoke(messageCardSendData.sendMessages);
-        return {code: 0, message: `门店普通任务[${messageCardSendData.storeTaskId}]发送飞书消息成功`, result: 'success'};
+        return {code: 0, message: `[${messageCardSendData.storeTaskId}]飞书消息发送成功`, result: 'success'};
     } catch (error) {
-        return {code: -1, message: error.message, result: 'failed'};
+        return {code: -1, message: `[${messageCardSendData.storeTaskId}]飞书消息发送失败：`+error.message, result: 'failed'};
     }
 };
 

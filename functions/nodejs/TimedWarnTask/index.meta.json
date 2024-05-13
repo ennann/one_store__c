@@ -1,0 +1,16 @@
+{
+  "apiID": "one_store__c__function_aadgihy75dqhy",
+  "apiName": "TimedWarnTask",
+  "label": {
+    "zh_CN": "定时提醒任务",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "任务定期提醒，获取普通门店管理记录中设置提醒的记录，发送飞书发片消息",
+    "en_US": ""
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": []
+}

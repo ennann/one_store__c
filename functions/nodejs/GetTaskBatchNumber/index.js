@@ -20,7 +20,7 @@ module.exports = async function (params, context, logger) {
     const { object_task_def } = params;
 
     // Log task definition
-    logger.info(`任务定义: ${JSON.stringify(object_task_def, null, 2)}`);
+    // logger.info(`任务定义: ${JSON.stringify(object_task_def, null, 2)}`);
 
     // Validate task definition presence
     if (!object_task_def) {
