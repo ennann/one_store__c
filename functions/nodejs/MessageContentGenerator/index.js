@@ -14,34 +14,38 @@ module.exports = async function (params, context, logger) {
   logger.info(`${new Date()} 消息卡片内容生成器函数开始执行...`);
   // https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#45e0953e
   // https://open.feishu.cn/document/server-docs/im-v1/message/create?appId=cli_a68809f3b7f9500d
+  logger.info({ params });
+  const { message_def, deploy_rule } = params;
+  const chatRecordList = await faas.function('DeployChatRange').invoke({ deploy_rule });
+  logger.info({ chatRecordList });
+  const chatIds = chatRecordList.map(i => i.chat_id);
+  logger.info({ chatIds });
 
-  const { message_def, group } = params;
-  // logger.info(params);
-  // 获取群ID
-  const groupIds = group.map(item => item._id);
-  const chats = await application.data.object("object_feishu_chat")
-    .where({
-      _id: application.operator.in(groupIds.join(","))
-    }).select("chat_id").find();
-  const chatIds = chats.map(i => i.chat_id);
-  logger.info({ groupIds, chatIds, ids: groupIds.join(',') });
-
+  let errorNum = 0;
+  const MAX_ERROR_NUM = 5; // 最大失败次数
   const client = await newLarkClient({ userId: context.user._id }, logger);
 
   // 获取图片image_key
   const getImgKey = async (token) => {
     const file = await application.resources.file.download(token);
-    const imageKeyRes = await client.im.image.create({
-      data: {
-        image_type: 'message',
-        image: file,
-      },
-    });
-    if (imageKeyRes.code && imageKeyRes.code !== 0) {
-      logger.error("图片上传失败", { imageKeyRes });
-      throw new Error("图片上传失败: " + imageKeyRes);
+    try {
+      const imageKeyRes = await client.im.image.create({
+        data: {
+          image_type: 'message',
+          image: file,
+        },
+      });
+      errorNum = 0;
+      return imageKeyRes.image_key;
+    } catch (error) {
+      if (errorNum >= MAX_ERROR_NUM) {
+        errorNum = 0;
+        throw new Error(`获取图片失败超过最大次数${MAX_ERROR_NUM} - `, error);
+      }
+      logger.error(error);
+      errorNum += 1;
+      await getImgKey(token);
     }
-    return imageKeyRes.image_key;
   };
 
   // 获取多张图片image_key
@@ -153,22 +157,22 @@ module.exports = async function (params, context, logger) {
   // 获取消息内容
   const getContent = async (type) => {
     switch (type) {
+      // 富文本类型消息
       case 'option_rich_text':
-        // 富文本类型消息
         const postData = await transformRichText(message_def.message_richtext, message_def.message_title);
         return {
           msg_type: "post",
           content: JSON.stringify(postData)
         };
+      // 视频类型消息直接发成文本类型
       case 'option_video':
-        // 视频类型消息直接发成文本类型
-        const textObj = { text: `${message_def.message_title} ${message_def.video_url}` }
+        const textObj = { text: `${message_def.message_title} ${message_def.video_content} ${message_def.video_url}` }
         return {
           msg_type: "text",
           content: JSON.stringify(textObj)
         };
+      // 消息卡片模板类型消息
       case 'option_card':
-        // TODO 消息卡片模板类型消息
         const data = {
           type: 'template',
           data: {
@@ -179,25 +183,40 @@ module.exports = async function (params, context, logger) {
           msg_type: "interactive",
           content: JSON.stringify(data)
         };
+      // 图片类型消息
       default:
-        // 图片类型
         const res = await getImgContent();
         return res;
     };
   }
 
+  // 获取消息内容
   const res = await getContent(message_def.option_message_type);
-  const paramsData = {
-    ...res,
-    receive_id: chatIds[0],
-    receive_id_type: "chat_id"
-  };
-  logger.info(JSON.stringify(paramsData, 0, 2));
 
-  try {
-    // 发送消息
-    await faas.function('MessageCardSend').invoke({ ...paramsData });
-  } catch (error) {
-    throw new Error(error)
+  // 发送消息
+  const sendMessage = async (receive_id) => {
+    const paramsData = {
+      ...res,
+      receive_id,
+      receive_id_type: "chat_id"
+    };
+    logger.info({ paramsData });
+    try {
+      await faas.function('MessageCardSend').invoke({ ...paramsData });
+      errorNum = 0;
+    } catch (error) {
+      if (errorNum >= MAX_ERROR_NUM) {
+        errorNum = 0;
+        throw new Error(`发送消息失败超过最大次数${MAX_ERROR_NUM} - `, error)
+      }
+      logger.error(error);
+      errorNum += 1;
+      await sendMessage(receive_id);
+    }
+  };
+
+  // 根据chat_id数组循环遍历
+  for (const receive_id of chatIds) {
+    await sendMessage(receive_id);
   }
 };

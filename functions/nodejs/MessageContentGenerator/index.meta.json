@@ -21,15 +21,12 @@
       "objectApiName": "object_chat_message_def"
     },
     {
-      "key": "group",
-      "type": "RecordList",
-      "label": "飞书群列表",
+      "key": "deploy_rule",
+      "type": "Record",
+      "label": "群组筛选记录",
       "required": true,
       "description": "",
-      "objectApiName": "object_feishu_chat",
-      "fieldApiNames": [
-        "chat_id"
-      ]
+      "objectApiName": "object_deploy_rule"
     }
   ],
   "output": []

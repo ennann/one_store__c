@@ -33,7 +33,7 @@ module.exports = async function (params, context, logger) {
         // Querying the database for existing task information
         const existingTasks = await application.data.object('object_task_create_monitor')
             .select('_id', 'batch_no')
-            .where({ 'task_def': object_task_def })
+            .where({ 'task_def':{ _id:object_task_def._id } })
             .find();
 
         // Generating new batch number based on existing tasks count

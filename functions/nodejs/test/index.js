@@ -15,12 +15,11 @@ module.exports = async function (params, context, logger) {
 
   // 在这里补充业务代码
 
-  await application.data
-  .object('object_feishu_chat')
-  .select(['chat_id','chat_status'])
-  .where({ chat_id: application.operator.notEmpty() ,chat_status:"option_02"})
-  .findStream(async records => {
-    logger.info("records：" +  records)
-    logger.info('records：', JSON.stringify(records, null, 2));
-  });
+  const existingTasks = await application.data.object('object_task_create_monitor')
+      .select('_id', 'batch_no')
+      .where({ 'task_def': { _id:1798834668885003 } })
+      .find();
+
+  return existingTasks;
+
 }
