@@ -25,8 +25,8 @@ module.exports = async function (params, context, logger) {
   // //查询分类
 
   // //查询一级菜单
-  const object_chat_menu = await application.data.object('object_chat_menu').select('_id','menu_link','level_count','name')
-  // .where({"menu_catalog":searchParams}).find()
+  const object_chat_menu = await application.data.object('object_chat_menu').select('_id','menu_link','level_count','name') 
+  .where({"menu_catalog":searchParams}).find()
   logger.info(object_chat_menu)
 
   // object_chat_menu.forEach( data =>{
