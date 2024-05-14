@@ -20,7 +20,7 @@ module.exports = async function (params, context, logger) {
     const { object_task_def } = params;
 
     // Log task definition
-    // logger.info(`任务定义: ${JSON.stringify(object_task_def, null, 2)}`);
+    logger.info(`任务定义: ${JSON.stringify(object_task_def, null, 2)}`);
 
     // Validate task definition presence
     if (!object_task_def) {
@@ -33,7 +33,7 @@ module.exports = async function (params, context, logger) {
         // Querying the database for existing task information
         const existingTasks = await application.data.object('object_task_create_monitor')
             .select('_id', 'batch_no')
-            .where({ 'task_def':{ _id:object_task_def._id } })
+            .where({ 'task_def': object_task_def })
             .find();
 
         // Generating new batch number based on existing tasks count

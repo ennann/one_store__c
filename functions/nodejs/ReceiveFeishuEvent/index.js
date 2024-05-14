@@ -105,7 +105,7 @@ module.exports = async function (params, context, logger) {
 
             // contact.user.updated_v3 用户信息更新事件
             logger.info('本次事件：用户信息更新事件');
-            faas.function("UserInfoChangeEvent").invoke(params?.event);
+            await faas.function("UserInfoChangeEvent").invoke(params);
             break;
 
         default:

@@ -2,7 +2,8 @@
 // 如安装 linq 包后就可以引入并使用这个包
 // const linq = require("linq");
 
-const {createLimiter} = require("../utils");
+const {createLimiter, newLarkClient} = require("../utils");
+const dayjs = require("dayjs");
 /**
  * @param {Params}  params     自定义参数
  * @param {Context} context    上下文参数，可通过此参数下钻获取上下文变量信息等
@@ -12,12 +13,36 @@ const {createLimiter} = require("../utils");
  */
 module.exports = async function (params, context, logger) {
     // 日志功能
-    // logger.info(`${new Date()} 函数开始执行`);
+    logger.info(`${new Date()} 定时提醒任务函数开始执行`);
     // 获取符合条件的门店普通任务
-    const {object_store_task} = params;
-    if (!object_store_task){
-        return {code: -1,message:"无符合提醒条件的门店普通任务记录"}
+    let globaNowTime = dayjs().valueOf(); //当前时间时间戳
+    const query = {
+        //待处理：option_pending，已转办：option_transferred，已完成：option_completed，打回：option_rollback，已取消：option_cancelled
+        task_status: application.operator.in('option_pending', 'option_transferred', 'option_rollback'), //任务状态
+        task_plan_time: application.operator.gte(globaNowTime),  //要求完成时间  时间戳
+        set_warning_time: "option_yes" //是否设置预警
     }
+    logger.info("query--->", query);
+    let res = await application.data.object("object_store_task")
+        .select("_id", "name", "description", "task_chat", "task_handler", "task_plan_time", "warning_time")
+        .where(query).find();
+    logger.info("查询[待处理&已转办&退回]门店普通任务记录数量->", res.length);
+    const object_store_task = [];
+    for (const re of res) {
+        //当前时间
+        let nowTime = dayjs(globaNowTime);
+        //要求完成时间
+        let taskPlanTime = dayjs(re.task_plan_time);
+        //告警时间：当前时间 + 任务到期前提醒时间（小时）
+        let number = Number.parseInt(re.warning_time);
+        let warningTime = nowTime.add(number, 'hour');
+        //当前时间 + 任务到期前提醒时间（小时） 晚于 要求完成时间
+        if (!warningTime.isBefore(taskPlanTime)) {
+            object_store_task.push(re);
+        }
+    }
+    logger.info("符合提醒的门店普通任务记录数量->", object_store_task.length);
+    const client = await newLarkClient({userId: context.user._id}, logger);
     //需要发送提醒的消息记录
     const messageCardSendDatas = [];
     for (const objectStoreTaskElement of object_store_task) {
@@ -39,7 +64,7 @@ module.exports = async function (params, context, logger) {
             "header": {
                 "template": "turquoise",
                 "title": {
-                    "content": name,
+                    "content": "【到期提醒】" + name,
                     "tag": "plain_text"
                 }
             }
@@ -51,32 +76,50 @@ module.exports = async function (params, context, logger) {
             receive_id: "", //接收方ID text
             content: json, //消息卡片内容  JSON
         }
-       if (objectStoreTaskElement.task_chat){
-           //获取群组ID
-           const feishuChat = await application.data.object('object_feishu_chat')
-               .select('_id', 'chat_id')
-               .where({_id: objectStoreTaskElement.task_chat._id}).findOne();
-           data.receive_id_type = "chat_id"
-           data.receive_id = feishuChat.chat_id
-           messageCardSendDatas.push(data);
-       }else{
-           data.receive_id_type = "email"
-           const feishuPeople = await application.data.object('_user')
-               .select('_id', '_email')
-               .where({_id: objectStoreTaskElement.task_handler._id}).findOne();
-           data.receive_id = feishuPeople._email
-           messageCardSendDatas.push(data);
-       }
+        if (objectStoreTaskElement.task_chat) {
+            //获取群组ID
+            const feishuChat = await application.data.object('object_feishu_chat')
+                .select('_id', 'chat_id')
+                .where({_id: objectStoreTaskElement.task_chat._id}).findOne();
+            data.receive_id_type = "chat_id"
+            data.receive_id = feishuChat.chat_id
+            messageCardSendDatas.push(data);
+        } else {
+            const feishuPeople = await application.data.object('_user')
+                .select('_id', '_email')
+                .where({_id: objectStoreTaskElement.task_handler._id}).findOne();
+            data.receive_id_type = "open_id"
+            try {
+                const emails = [];
+                emails.push(feishuPeople._email);
+                //获取open_id
+                const res = await client.contact.user.batchGetId({
+                    params: {user_id_type: "open_id"},
+                    data: {emails: emails}
+                });
+                const user = res.data.user_list.map(item => ({
+                    email: item.email,
+                    open_id: item.user_id
+                }));
+                data.receive_id = user[0].open_id;
+                messageCardSendDatas.push(data);
+            } catch (error) {
+                logger.error(`[${feishuPeople._id}]用户邮箱为null！`, error);
+            }
+        }
     }
     //创建限流器
     const limitedsendFeishuMessage = createLimiter(sendFeishuMessage);
     //发送飞书卡片消息
-    logger.info(`任务定期提醒数量:${messageCardSendDatas.length}」` );
+    logger.info(`任务定期提醒数量:${messageCardSendDatas.length}`);
     const sendFeishuMessageResults = await Promise.all(messageCardSendDatas.map(messageCardSendData => limitedsendFeishuMessage(messageCardSendData)));
     const sendFeishuMessageSuccess = sendFeishuMessageResults.filter(result => result.code === 0);
     const sendFeishuMessageFail = sendFeishuMessageResults.filter(result => result.code !== 0);
     logger.info(`任务定期提醒成功数量: ${sendFeishuMessageSuccess.length}, 失败数量: ${sendFeishuMessageFail.length}`);
-    return {code: 0,message:`任务定期提醒成功数量: ${sendFeishuMessageSuccess.length}, 失败数量: ${sendFeishuMessageFail.length}`}
+    return {
+        code: 0,
+        message: `任务定期提醒成功数量: ${sendFeishuMessageSuccess.length}, 失败数量: ${sendFeishuMessageFail.length}`
+    }
 }
 const sendFeishuMessage = async (messageCardSendData) => {
     try {

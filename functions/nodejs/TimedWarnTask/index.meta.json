@@ -11,21 +11,6 @@
   },
   "longTaskMode": false,
   "frontendSDKInvokable": false,
-  "input": [
-    {
-      "key": "object_store_task",
-      "type": "RecordList",
-      "label": "门店普通任务列表",
-      "required": true,
-      "description": "",
-      "objectApiName": "object_store_task",
-      "fieldApiNames": [
-        "name",
-        "description",
-        "task_handler",
-        "task_chat"
-      ]
-    }
-  ],
+  "input": [],
   "output": []
 }

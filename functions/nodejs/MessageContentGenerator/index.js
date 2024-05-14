@@ -21,13 +21,11 @@ module.exports = async function (params, context, logger) {
 
   // 消息渠道为飞书群
   if (message_def.send_channel === "option_group") {
-    if (message_def?.chat_rule?.id) {
-      const chatRecordList = await faas.function('DeployChatRange')
-        .invoke({ deploy_rule: message_def.chat_rule });
-      logger.info({ chatRecordList });
-      sendIds = chatRecordList.map(i => i.chat_id);
-      logger.info({ sendIds });
-    }
+    const chatRecordList = await faas.function('DeployChatRange')
+      .invoke({ deploy_rule: message_def.chat_rule });
+    logger.info({ chatRecordList });
+    sendIds = chatRecordList.map(i => i.chat_id);
+    logger.info({ sendIds });
   }
 
   // 消息渠道为个人
@@ -181,7 +179,7 @@ module.exports = async function (params, context, logger) {
         };
       // 视频类型消息直接发成文本类型
       case 'option_video':
-        const textObj = { text: `${message_def.message_title} ${message_def.video_content} ${message_def.video_url}` }
+        const textObj = { text: `${message_def.message_title} ${message_def.video_url}` }
         return {
           msg_type: "text",
           content: JSON.stringify(textObj)
