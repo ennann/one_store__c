@@ -325,6 +325,24 @@ async function fetchEmailsByUserId(userIdList) {
     }
 }
 
+/**
+ * @description 根据部门ID获取部门信息
+ * @param {*} department_id
+ * @returns
+ */
+async function fetchDepartmentInfoById(client, department_id) {
+    
+    let response = await client.contact.department.get({
+        path: { department_id },
+        params: {
+            user_id_type: 'open_id',
+            department_id_type: 'open_department_id',
+        },
+    });
+
+    return response.data.department;
+}
+
 module.exports = {
     newLarkClient,
     createLimiter,
@@ -336,4 +354,5 @@ module.exports = {
     getUsersByOpenId,
     batchOperation,
     fetchEmailsByUserId,
+    fetchDepartmentInfoById
 };

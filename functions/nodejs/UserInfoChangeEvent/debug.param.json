@@ -1,74 +1,52 @@
 {
-  "params": {
-    "event": {
+    "params": {
         "event": {
-            "object": {
-                "avatar": {
-                    "avatar_240": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=240x240&cut_type=&quality=&format=png&sticker_format=.webp",
-                    "avatar_640": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=640x640&cut_type=&quality=&format=png&sticker_format=.webp",
-                    "avatar_72": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=72x72&cut_type=&quality=&format=png&sticker_format=.webp",
-                    "avatar_origin": "https://s1-imfile.feishucdn.com/static-resource/v1/v2_3ee237ed-ace2-4e24-9d81-00bef9e997eg~?image_size=noop&cut_type=&quality=&format=png&sticker_format=.webp"
+            "event": {
+                "object": {
+                    "avatar": {
+                        "avatar_240": "https://s1-imfile.feishucdn.com/static-resource/v1/v3_00an_a4eeb67f-a548-4144-af54-38265a3ccf7g~?image_size=240x240&cut_type=&quality=&format=png&sticker_format=.webp",
+                        "avatar_640": "https://s1-imfile.feishucdn.com/static-resource/v1/v3_00an_a4eeb67f-a548-4144-af54-38265a3ccf7g~?image_size=640x640&cut_type=&quality=&format=png&sticker_format=.webp",
+                        "avatar_72": "https://s1-imfile.feishucdn.com/static-resource/v1/v3_00an_a4eeb67f-a548-4144-af54-38265a3ccf7g~?image_size=72x72&cut_type=&quality=&format=png&sticker_format=.webp",
+                        "avatar_origin": "https://s1-imfile.feishucdn.com/static-resource/v1/v3_00an_a4eeb67f-a548-4144-af54-38265a3ccf7g~?image_size=noop&cut_type=&quality=&format=png&sticker_format=.webp"
+                    },
+                    "city": "",
+                    "country": "",
+                    "department_ids": ["od-4c59749d6303cb1317ec0b3def35076a"],
+                    "email": "huanghongzhi.4207@bytedance.com",
+                    "employee_no": "",
+                    "employee_type": 1,
+                    "en_name": "*********",
+                    "enterprise_email": "",
+                    "gender": 0,
+                    "job_title": "",
+                    "join_time": 1715184000,
+                    "mobile": "+861********41",
+                    "name": "黄鸿知",
+                    "nickname": "",
+                    "open_id": "ou_ac1f06d7be75633f74165a487da8cf3d",
+                    "orders": [{ "department_id": "od-4c59749d6303cb1317ec0b3def35076a", "department_order": 1, "is_primary_dept": true, "user_order": 0 }],
+                    "status": { "is_activated": true, "is_exited": false, "is_frozen": false, "is_resigned": false, "is_unjoin": false },
+                    "union_id": "on_bf207f4df613fc50e13a29ba964a3dd3",
+                    "user_id": "c7692f7a",
+                    "work_station": ""
                 },
-                "city": "",
-                "country": "",
-                "department_ids": [
-                    "od-e3f54f43ca478215c32c41370af5a099"
-                ],
-                "employee_no": "",
-                "employee_type": 5,
-                "en_name": "",
-                "enterprise_email": "",
-                "gender": 0,
-                "job_title": "",
-                "join_time": 1692576000,
-                "name": "赵宜哲",
-                "nickname": "",
-                "open_id": "ou_a756e4e91138b7df0387d52fb509eec2",
-                "orders": [
-                    {
-                        "department_id": "od-e3f54f43ca478215c32c41370af5a099",
-                        "department_order": 1,
-                        "is_primary_dept": true,
-                        "user_order": 0
-                    }
-                ],
-                "status": {
-                    "is_activated": true,
-                    "is_exited": false,
-                    "is_frozen": false,
-                    "is_resigned": false,
-                    "is_unjoin": false
-                },
-                "union_id": "on_1e91a76aa1eb9efb7d2ff12fa26ab41d",
-                "user_id": "c18d14ca",
-                "work_station": ""
+                "old_object": {
+                    "department_ids": ["od-0e1c870f6d7acf299144997441acaf8e"],
+                    "open_id": "ou_ac1f06d7be75633f74165a487da8cf3d",
+                    "orders": [{ "department_id": "od-0e1c870f6d7acf299144997441acaf8e", "department_order": 1, "is_primary_dept": true, "user_order": 0 }],
+                    "union_id": "on_bf207f4df613fc50e13a29ba964a3dd3"
+                }
             },
-            "old_object": {
-                "department_ids": [
-                    "od-43a156abc763edad2d977934f9988eeb"
-                ],
-                "open_id": "ou_a756e4e91138b7df0387d52fb509eec2",
-                "orders": [
-                    {
-                        "department_id": "od-43a156abc763edad2d977934f9988eeb",
-                        "department_order": 1,
-                        "is_primary_dept": true,
-                        "user_order": 0
-                    }
-                ],
-                "union_id": "on_1e91a76aa1eb9efb7d2ff12fa26ab41d"
-            }
-        },
-        "header": {
-            "app_id": "cli_a6b23873d463100b",
-            "create_time": "1715049346000",
-            "event_id": "b71ef8478dd007876b793cc310be26ac",
-            "event_type": "contact.user.updated_v3",
-            "tenant_key": "10de27cde1ae975d",
-            "token": "xu2L9D********************rCdoGP"
-        },
-        "schema": "2.0"
-    }
-},
-  "context": {}
+            "header": {
+                "app_id": "cli_a6b23a7a2f39d00b",
+                "create_time": "1715667111000",
+                "event_id": "a482b8f60e1b700ff32d4932c9847416",
+                "event_type": "contact.user.updated_v3",
+                "tenant_key": "155d0ef21f6f575f",
+                "token": "3fbebb********************6df327"
+            },
+            "schema": "2.0"
+        }
+    },
+    "context": {}
 }
