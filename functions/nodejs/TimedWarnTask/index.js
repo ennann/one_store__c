@@ -76,6 +76,7 @@ module.exports = async function (params, context, logger) {
     const sendFeishuMessageSuccess = sendFeishuMessageResults.filter(result => result.code === 0);
     const sendFeishuMessageFail = sendFeishuMessageResults.filter(result => result.code !== 0);
     logger.info(`任务定期提醒成功数量: ${sendFeishuMessageSuccess.length}, 失败数量: ${sendFeishuMessageFail.length}`);
+    return {code: 0,message:`任务定期提醒成功数量: ${sendFeishuMessageSuccess.length}, 失败数量: ${sendFeishuMessageFail.length}`}
 }
 const sendFeishuMessage = async (messageCardSendData) => {
     try {

@@ -11,30 +11,30 @@
  */
 module.exports = async function (params, context, logger) {
   // 日志功能
-  // logger.info(`${new Date()} 函数开始执行`);
+  logger.info(`${new Date()} 函数开始执行`,params);
 
   // 在这里补充业务代码
 
-  if(!params.object_chat_menu_catalog){
-    logger.error("传入的群菜单分类为空")
-  }
+
+  // if(!params.object_chat_menu_catalog){
+  //   logger.error("传入的群菜单分类为空")
+  // }
 
   const data = 1;
-  //查询分类
-  console.info(object_chat_menu_catalog)
-  //查询一级菜单
-  const object_chat_menu = await application.data.object('object_chat_menu').select('_id','menu_link','level_count','name').where({"menu_catalog":params.object_chat_menu_catalog}).find()
+  // //查询分类
 
-  object_chat_menu.array.forEach(element => {
-          //判断二级菜单数量===0
-  if(element.level_count===0){
-    //判断一级菜单链接是否为空
-    if(!element.menu_link){
-      // logger.error(element.name+"菜单的链接与二级菜单能同时为空！")
-      data = 0
-    }
-  }
-  });
+  // //查询一级菜单
+  // const object_chat_menu = await application.data.object('object_chat_menu').select('_id','menu_link','level_count','name').where({"menu_catalog":params.object_chat_menu_catalog}).find()
+  // console.info(object_chat_menu)
+
+  //   object_chat_menu.forEach( data =>{
+  //     if(data.level_count==0){
+  //       if(data.menu_link == null){
+  //         logger.error(object_chat_menu.name+" 菜单下没有有效链接请检查！");
+  //       }
+  //     }
+  //   })
+
   return {data}
 
 }

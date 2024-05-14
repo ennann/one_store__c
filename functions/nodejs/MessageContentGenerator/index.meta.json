@@ -19,14 +19,6 @@
       "required": true,
       "description": "消息定义记录",
       "objectApiName": "object_chat_message_def"
-    },
-    {
-      "key": "deploy_rule",
-      "type": "Record",
-      "label": "群组筛选记录",
-      "required": true,
-      "description": "",
-      "objectApiName": "object_deploy_rule"
     }
   ],
   "output": []

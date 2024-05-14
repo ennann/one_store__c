@@ -1,0 +1,35 @@
+{
+  "apiID": "one_store__c__function_aadgihz723ihi",
+  "apiName": "DeployMemberRange",
+  "label": {
+    "zh_CN": "分发规则人员范围",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "根据人员筛选规则返回人员列表",
+    "en_US": ""
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "user_rule",
+      "type": "Record",
+      "label": "人员筛选规则",
+      "required": true,
+      "description": "",
+      "objectApiName": "object_user_rule"
+    }
+  ],
+  "output": [
+    {
+      "key": "userList",
+      "type": "List",
+      "label": "人员ID列表",
+      "description": "",
+      "listItem": {
+        "type": "Text"
+      }
+    }
+  ]
+}

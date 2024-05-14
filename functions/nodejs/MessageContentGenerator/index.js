@@ -15,11 +15,26 @@ module.exports = async function (params, context, logger) {
   // https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#45e0953e
   // https://open.feishu.cn/document/server-docs/im-v1/message/create?appId=cli_a68809f3b7f9500d
   logger.info({ params });
-  const { message_def, deploy_rule } = params;
-  const chatRecordList = await faas.function('DeployChatRange').invoke({ deploy_rule });
-  logger.info({ chatRecordList });
-  const chatIds = chatRecordList.map(i => i.chat_id);
-  logger.info({ chatIds });
+  const { message_def } = params;
+  let receive_id_type = message_def.send_channel === "option_group" ? "chat_id" : "open_id";
+  let sendIds = []
+
+  // 消息渠道为飞书群
+  if (message_def.send_channel === "option_group") {
+    if (message_def?.chat_rule?.id) {
+      const chatRecordList = await faas.function('DeployChatRange')
+        .invoke({ deploy_rule: message_def.chat_rule });
+      logger.info({ chatRecordList });
+      sendIds = chatRecordList.map(i => i.chat_id);
+      logger.info({ sendIds });
+    }
+  }
+
+  // 消息渠道为个人
+  if (message_def.send_channel === "option_user") {
+    const userList = await faas.function('DeployMemberRange').invoke({ user_rule: message_def.user_rule });
+    sendIds = userList.map(i => i.open_id);
+  }
 
   let errorNum = 0;
   const MAX_ERROR_NUM = 5; // 最大失败次数
@@ -115,7 +130,7 @@ module.exports = async function (params, context, logger) {
         )
       });
     }
-    console.log({ content });
+    logger.info({ content });
     return { zh_cn: { title, content } };
   };
 
@@ -198,7 +213,7 @@ module.exports = async function (params, context, logger) {
     const paramsData = {
       ...res,
       receive_id,
-      receive_id_type: "chat_id"
+      receive_id_type
     };
     logger.info({ paramsData });
     try {
@@ -215,8 +230,10 @@ module.exports = async function (params, context, logger) {
     }
   };
 
-  // 根据chat_id数组循环遍历
-  for (const receive_id of chatIds) {
-    await sendMessage(receive_id);
+  // 根据id数组循环遍历
+  if (sendIds.length > 0) {
+    for (const id of sendIds) {
+      await sendMessage(id);
+    }
   }
 };
