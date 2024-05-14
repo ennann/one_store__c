@@ -2,7 +2,7 @@
   "apiID": "one_store__c__function_aadghv4vwdocu",
   "apiName": "GetSecondLevelCountByTop",
   "label": {
-    "zh_CN": "获取二级菜单个数",
+    "zh_CN": "校验菜单分类是否满足分发",
     "en_US": null
   },
   "description": {
