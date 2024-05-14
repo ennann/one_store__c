@@ -29,13 +29,13 @@ module.exports = async function (params, context, logger) {
   // .where({"menu_catalog":searchParams}).find()
   logger.info(object_chat_menu)
 
-    // object_chat_menu.forEach( data =>{
-    //   if(data.level_count==0){
-    //     if(data.menu_link == null){
-    //       logger.error(object_chat_menu.name+" 菜单下没有有效链接请检查！");
-    //     }
-    //   }
-    // })
+  // object_chat_menu.forEach( data =>{
+  //   if(data.level_count==0){
+  //     if(data.menu_link == null){
+  //       logger.error(object_chat_menu.name+" 菜单下没有有效链接请检查！");
+  //     }
+  //   }
+  // })
 
   return {data}
 
