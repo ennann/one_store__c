@@ -23,22 +23,22 @@ module.exports = async function (params, context, logger) {
   }
 
   const ruleRecord = await application.data
-    .object("object_user_rule")
-    .select(["_id", "job_position", "department", "work_team"])
-    .where({ _id: user_rule._id || user_rule.id })
-    .findOne();
+      .object("object_user_rule")
+      .select(["_id", "job_position", "department", "work_team"])
+      .where({ _id: user_rule._id || user_rule.id })
+      .findOne();
   logger.info('object_user_rule', JSON.stringify(ruleRecord, null, 2));
 
   const getUserRecord = async (query, description) => {
     try {
       const userRecords = [];
       await application.data
-        .object('_user')
-        .select('_id', '_email')
-        .where(query)
-        .findStream(async records => {
-          userRecords.push(...records.map(item => ({ _id: item._id, email: item._email })));
-        });
+          .object('_user')
+          .select('_id', '_email')
+          .where(query)
+          .findStream(async records => {
+            userRecords.push(...records.map(item => ({ _id: item._id, email: item._email })));
+          });
       return userRecords
     } catch (error) {
       logger.error(`${description}查询时发生错误：`, error);
@@ -46,14 +46,32 @@ module.exports = async function (params, context, logger) {
     }
   };
 
+  // 获取部门多层级下的人员
+  const getDepartmentUser = async (ids) => {
+    const list = [];
+    const users = await getUserRecord(
+        { _department: { _id: application.operator.hasAnyOf(ids) } },
+        '所属部门'
+    );
+    list.push(...users);
+    // 获取以当前部门为上级部门的子部门
+    const childDepartment = await application.data
+        .object('_department')
+        .select("_id")
+        .where({ _superior: { _id: application.operator.hasAnyOf(ids) } })
+        .find();
+    logger.info({ childDepartment });
+    if (childDepartment.length > 0) {
+      const childDepartmentUsers = await getDepartmentUser(childDepartment.map(item => item._id));
+      list.push(...childDepartmentUsers);
+    }
+    return list;
+  }
+
   // 获取所属部门下的人员
   if (ruleRecord.department && ruleRecord.department.length > 0) {
     const departmentIds = ruleRecord.department.map(item => item._id);
-    const users = await getUserRecord({
-      _department: {
-        _id: application.operator.hasAnyOf(departmentIds)
-      }
-    }, '所属部门');
+    const users = await getDepartmentUser(departmentIds);
     logger.info({ departmentUsers: users });
     userList.push(...users);
   }
@@ -62,20 +80,19 @@ module.exports = async function (params, context, logger) {
   if (ruleRecord.work_team && ruleRecord.work_team.length > 0) {
     const teamIds = ruleRecord.work_team.map(item => item._id);
     const teamUserList = await application.data
-      .object('object_user_group_member')
-      .select("user")
-      .where({
-        user_group: {
-          _id: application.operator.hasAnyOf(teamIds)
-        }
-      })
-      .find();
-    logger.info({ teamUserList })
+        .object('object_user_group_member')
+        .select("user")
+        .where({
+          user_group: {
+            _id: application.operator.hasAnyOf(teamIds)
+          }
+        })
+        .find();
     const users = await getUserRecord(
-      { _id: application.operator.hasAnyOf(teamUserList.map(item => item.user._id)) },
-      '所属用户组'
+        { _id: application.operator.hasAnyOf(teamUserList.map(item => item.user._id)) },
+        '所属用户组'
     );
-    logger.info({ teamUser: users });
+    logger.info({ teamUsers: users });
     userList.push(...users);
   }
 
@@ -97,10 +114,13 @@ module.exports = async function (params, context, logger) {
     if (res.code !== 0) {
       throw new Error("通过人员筛选条件获取人员失败");
     }
-    return res.data.user_list.map(item => ({
-      email: item.email,
-      open_id: item.user_id
-    }))
+    return res.data.user_list
+        .filter(ele => !!ele.user_id)
+        .map(item => ({
+          email: item.email,
+          open_id: item.user_id,
+          _id: userList.find(i => i.email === item.email)._id
+        }))
   } catch (error) {
     logger.error("通过人员筛选条件获取人员失败");
     throw new Error("通过人员筛选条件获取人员失败");

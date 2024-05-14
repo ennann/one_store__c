@@ -1,7 +1,7 @@
 // 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
 // 如安装 linq 包后就可以引入并使用这个包
 const dayjs = require("dayjs");
-const {createLimiter} = require('../utils');
+const {createLimiter,newLarkClient} = require('../utils');
 /**
  * @param {Params}  params     自定义参数
  * @param {Context} context    上下文参数，可通过此参数下钻获取上下文变量信息等
@@ -12,7 +12,7 @@ const {createLimiter} = require('../utils');
 module.exports = async function (params, context, logger) {
     // 日志功能
     logger.info(`定时生成任务记录函数开始执行 ${new Date()}`);
-
+    const client = await newLarkClient({ userId: context.user._id }, logger);
     //一次性非立即发布任务
     const query = {
         option_status: "option_02", //启用
@@ -47,7 +47,7 @@ module.exports = async function (params, context, logger) {
     logger.info(`需要为任务处理记录创建门店普通任务的任务处理记录数量->`, finaTaskMonitorEntryList.length)
     // 为创建任务处理记录创建门店普通任务
     if (finaTaskMonitorEntryList.length > 0) {
-        const storeTaskCreateResults = await Promise.all(finaTaskMonitorEntryList.map(task => createStoreTaskEntry(task, logger)));
+        const storeTaskCreateResults = await Promise.all(finaTaskMonitorEntryList.map(task => createStoreTaskEntry(task, logger,client)));
         const successfulStoreTasks = storeTaskCreateResults.filter(result => result.code === 0);
         const failedStoreTasks = storeTaskCreateResults.filter(result => result.code !== 0);
         logger.info(`成功为任务处理记录创建门店普通任务数量: ${successfulStoreTasks.length}, 失败数量: ${failedStoreTasks.length}`);
@@ -132,7 +132,7 @@ async function createTaskMonitorEntry(task, logger) {
     }
 }
 
-async function createStoreTaskEntry(task, logger) {
+async function createStoreTaskEntry(task, logger,client) {
     try {
         const query = {
             _id: task.task_def._id,
@@ -176,8 +176,11 @@ async function createStoreTaskEntry(task, logger) {
             } else if (item.option_handler_type === "option_02") {
                 //人员塞选规则
                 const userList = await faas.function('DeployMemberRange').invoke({ user_rule: item.user_rule });
-                logger.info(`人员筛选规则[${item.user_rule._id}]返回群数量->`, userList.length)
+                logger.info(`人员筛选规则[${item.user_rule._id}]返回人员数量->`, userList.length)
                 for (const userListElement of userList) {
+                    // const user = await application.data.object('_user')
+                    //     .select('_id')
+                    //     .where({_email: userListElement.email}).findOne();
                     const createData = {
                         name: item.name,
                         description: item.description,
@@ -205,13 +208,13 @@ async function createStoreTaskEntry(task, logger) {
         }
         logger.info(`需要为任务处理记录[${task._id}]创建的门店普通任务数量->`, createDatas.length);
         if (createDatas.length > 0) {
-            const storeTaskCreateResults = await Promise.all(createDatas.map(task => createStoreTaskEntryStart(task, logger)));
+            const storeTaskCreateResults = await Promise.all(createDatas.map(task => createStoreTaskEntryStart(task, logger,client)));
             const successfulStoreTasks = storeTaskCreateResults.filter(result => result.code === 0);
             const failedStoreTasks = storeTaskCreateResults.filter(result => result.code !== 0);
             logger.info(`为任务处理记录[${task._id}]创建门店普通任务成功数量: ${successfulStoreTasks.length}, 失败数量: ${failedStoreTasks.length}`);
             const messageCardSendDatas = [];
             storeTaskCreateResults.forEach(item => {
-                if (!item.messageCardSendData){
+                if (item.messageCardSendData){
                     messageCardSendDatas.push({
                         sendMessages: item.messageCardSendData,
                         storeTaskId: item.storeTaskId
@@ -221,7 +224,7 @@ async function createStoreTaskEntry(task, logger) {
             //创建限流器
             const limitedsendFeishuMessage = createLimiter(sendFeishuMessage);
             //发送飞书卡片消息
-            logger.info(`根据门店普通任务创建记录需要发送飞书数量---->${messageCardSendDatas.length}`)
+            logger.info(`根据门店普通任务创建记录需要发送飞书数量->${messageCardSendDatas.length}`)
             const sendFeishuMessageResults = await Promise.all(messageCardSendDatas.map(messageCardSendData => limitedsendFeishuMessage(messageCardSendData)));
 
             const sendFeishuMessageSuccess = sendFeishuMessageResults.filter(result => result.code === 0);
@@ -239,7 +242,7 @@ async function createStoreTaskEntry(task, logger) {
                 logger.error(`修改任务处理记录[${task._id}]状态为处理中失败-->`, error);
             }
         } else {
-            logger.warn("根据任务定义群组和人员筛选规则查询结果为空")
+            logger.warn("根据任务定义群组筛选规则和人员筛选规则查询结果为空")
         }
         return {code: 0, message: '为任务处理记录创建门店普通任务成功', task_id: task._id};
     } catch (error) {
@@ -258,7 +261,7 @@ async function createStoreTaskEntry(task, logger) {
     }
 }
 
-async function createStoreTaskEntryStart(task, logger) {
+async function createStoreTaskEntryStart(task, logger,client) {
     try {
         const storeTaskId = await application.data.object('object_store_task').create(task);
         //发送消息发片
@@ -301,15 +304,27 @@ async function createStoreTaskEntryStart(task, logger) {
                 data.receive_id_type = "chat_id"
                 data.receive_id = feishuChat.chat_id
             } else {
-                data.receive_id_type = "email"
                 const feishuPeople = await application.data.object('_user')
                     .select('_id', '_email')
                     .where({_id: task.task_handler._id}).findOne();
-                if (feishuPeople._email != null){
-                    data.receive_id = feishuPeople._email
-                }else{
-                    logger.error(`创建门店普通任务成功&组装飞书消息失败-->[${feishuPeople._id}]用户邮箱为空！！！`);
-                    return {code: 0, message: '创建门店普通任务成功&组装飞书消息失败-->邮箱为空！！！', storeTaskId: storeTaskId._id, messageCardSendData: {}};
+                data.receive_id_type = "open_id"
+                // TODO  Cannot read properties of null (reading '_email')
+                try {
+                    const emails = [];
+                    emails.push(feishuPeople._email);
+                    //获取open_id
+                    const res = await client.contact.user.batchGetId({
+                        params: { user_id_type: "open_id" },
+                        data: { emails: emails }
+                    });
+                    const user = res.data.user_list.map(item => ({
+                        email: item.email,
+                        open_id: item.user_id
+                    }));
+                    data.receive_id = user[0].open_id;
+                }catch (error){
+                    logger.error(`创建门店普通任务成功&组装飞书消息失败-->[${feishuPeople._email}]用户邮箱为null！`,error);
+                    return {code: 0, message: '创建门店普通任务成功&组装飞书消息失败-->邮箱为空！', storeTaskId: storeTaskId._id, messageCardSendData: {}};
                 }
             }
             return {code: 0, message: '创建门店普通任务成功', storeTaskId: storeTaskId._id, messageCardSendData: data};
