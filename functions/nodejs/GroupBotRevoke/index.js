@@ -9,13 +9,13 @@ const { newLarkClient, createLimiter, batchOperation } = require('../utils');
  */
 module.exports = async function (params, context, logger) {
     // 日志功能
-    logger.info('开始执行群置顶分发函数', { timestamp: new Date(), user: context.user._id });
+    logger.info('开始执行批量移除群机器人函数', { timestamp: new Date(), user: context.user._id });
     logger.info(params);
 
     const { chat_bot } = params;
     if (!chat_bot || !chat_bot._id) {
-        logger.error('错误：缺少群置顶信息');
-        return { code: -1, message: '错误：缺少群置顶信息' };
+        logger.error('错误：缺少机器人信息');
+        return { code: -1, message: '错误：缺少机器人信息' };
     }
 
     // 调用函数获取群置顶的群聊ID列表
@@ -25,7 +25,7 @@ module.exports = async function (params, context, logger) {
 
     if (!chatIdList || chatIdList.length === 0) {
         logger.error('查询结果为空，未找到对应的群聊');
-        return { code: -2, message: '未找到对应的群聊，无法分发' };
+        return { code: -2, message: '未找到对应的群聊，无法移除' };
     }
 
     // 获取机器人信息并创建客户端实例
