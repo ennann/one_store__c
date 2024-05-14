@@ -1,0 +1,25 @@
+{
+  "apiID": "one_store__c__function_aadgimmmve2di",
+  "apiName": "TaskCreateVerifyTask",
+  "label": {
+    "zh_CN": "创建验收任务",
+    "en_US": "Create Verify Task"
+  },
+  "description": {
+    "zh_CN": "根据任务记录和任务定义记录的数据，创建与任务相对的验收任务",
+    "en_US": "Create a verify task corresponding to the task record and task definition record data"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "store_task",
+      "type": "Record",
+      "label": "门店普通任务",
+      "required": true,
+      "description": "门店普通任务记录",
+      "objectApiName": "object_store_task"
+    }
+  ],
+  "output": []
+}
