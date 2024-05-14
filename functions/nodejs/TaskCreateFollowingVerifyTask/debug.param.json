@@ -1,0 +1,10 @@
+{
+  "params": {
+    "verify_task": {
+      "_id": 1799031309205577,
+      "store_task": { "id": 1799010105175067 },
+      "check_activity": "option_02"
+    }
+  },
+  "context": {}
+}
