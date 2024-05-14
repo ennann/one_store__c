@@ -23,22 +23,22 @@ module.exports = async function (params, context, logger) {
   }
 
   const ruleRecord = await application.data
-      .object("object_user_rule")
-      .select(["_id", "job_position", "department", "work_team"])
-      .where({ _id: user_rule._id || user_rule.id })
-      .findOne();
+    .object("object_user_rule")
+    .select(["_id", "job_position", "department", "work_team"])
+    .where({ _id: user_rule._id || user_rule.id })
+    .findOne();
   logger.info('object_user_rule', JSON.stringify(ruleRecord, null, 2));
 
   const getUserRecord = async (query, description) => {
     try {
       const userRecords = [];
       await application.data
-          .object('_user')
-          .select('_id', '_email')
-          .where(query)
-          .findStream(async records => {
-            userRecords.push(...records.map(item => ({ _id: item._id, email: item._email })));
-          });
+        .object('_user')
+        .select('_id', '_email')
+        .where(query)
+        .findStream(async records => {
+          userRecords.push(...records.map(item => ({ _id: item._id, email: item._email })));
+        });
       return userRecords
     } catch (error) {
       logger.error(`${description}查询时发生错误：`, error);
@@ -50,16 +50,16 @@ module.exports = async function (params, context, logger) {
   const getDepartmentUser = async (ids) => {
     const list = [];
     const users = await getUserRecord(
-        { _department: { _id: application.operator.hasAnyOf(ids) } },
-        '所属部门'
+      { _department: { _id: application.operator.hasAnyOf(ids) } },
+      '所属部门'
     );
     list.push(...users);
     // 获取以当前部门为上级部门的子部门
     const childDepartment = await application.data
-        .object('_department')
-        .select("_id")
-        .where({ _superior: { _id: application.operator.hasAnyOf(ids) } })
-        .find();
+      .object('_department')
+      .select("_id")
+      .where({ _superior: { _id: application.operator.hasAnyOf(ids) } })
+      .find();
     logger.info({ childDepartment });
     if (childDepartment.length > 0) {
       const childDepartmentUsers = await getDepartmentUser(childDepartment.map(item => item._id));
@@ -80,23 +80,24 @@ module.exports = async function (params, context, logger) {
   if (ruleRecord.work_team && ruleRecord.work_team.length > 0) {
     const teamIds = ruleRecord.work_team.map(item => item._id);
     const teamUserList = await application.data
-        .object('object_user_group_member')
-        .select("user")
-        .where({
-          user_group: {
-            _id: application.operator.hasAnyOf(teamIds)
-          }
-        })
-        .find();
+      .object('object_user_group_member')
+      .select("user")
+      .where({
+        user_group: {
+          _id: application.operator.hasAnyOf(teamIds)
+        }
+      })
+      .find();
     const users = await getUserRecord(
-        { _id: application.operator.hasAnyOf(teamUserList.map(item => item.user._id)) },
-        '所属用户组'
+      { _id: application.operator.hasAnyOf(teamUserList.map(item => item.user._id)) },
+      '所属用户组'
     );
     logger.info({ teamUsers: users });
     userList.push(...users);
   }
 
   userList = userList.filter((item, index, self) => self.findIndex(t => t.email === item.email) === index);
+  // userList = [...userList, { email: "huanghongzhi.4207@bytedance.com", _id: 1798564594579460 }];
   logger.info({ userList });
 
   if (userList.length === 0) {
@@ -115,12 +116,12 @@ module.exports = async function (params, context, logger) {
       throw new Error("通过人员筛选条件获取人员失败");
     }
     return res.data.user_list
-        .filter(ele => !!ele.user_id)
-        .map(item => ({
-          email: item.email,
-          open_id: item.user_id,
-          _id: userList.find(i => i.email === item.email)._id
-        }))
+      .filter(ele => !!ele.user_id)
+      .map(item => ({
+        email: item.email,
+        open_id: item.user_id,
+        _id: userList.find(i => i.email === item.email)._id
+      }))
   } catch (error) {
     logger.error("通过人员筛选条件获取人员失败");
     throw new Error("通过人员筛选条件获取人员失败");

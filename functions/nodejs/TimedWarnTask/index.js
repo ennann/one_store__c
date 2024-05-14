@@ -39,7 +39,7 @@ module.exports = async function (params, context, logger) {
             "header": {
                 "template": "turquoise",
                 "title": {
-                    "content": name,
+                    "content": "【到期提醒】" + name,
                     "tag": "plain_text"
                 }
             }
@@ -60,12 +60,27 @@ module.exports = async function (params, context, logger) {
            data.receive_id = feishuChat.chat_id
            messageCardSendDatas.push(data);
        }else{
-           data.receive_id_type = "email"
            const feishuPeople = await application.data.object('_user')
                .select('_id', '_email')
                .where({_id: objectStoreTaskElement.task_handler._id}).findOne();
-           data.receive_id = feishuPeople._email
-           messageCardSendDatas.push(data);
+           data.receive_id_type = "open_id"
+           try {
+               const emails = [];
+               emails.push(feishuPeople._email);
+               //获取open_id
+               const res = await client.contact.user.batchGetId({
+                   params: { user_id_type: "open_id" },
+                   data: { emails: emails }
+               });
+               const user = res.data.user_list.map(item => ({
+                   email: item.email,
+                   open_id: item.user_id
+               }));
+               data.receive_id = user[0].open_id;
+               messageCardSendDatas.push(data);
+           }catch (error){
+               logger.error(`[${feishuPeople._id}]用户邮箱为null！`,error);
+           }
        }
     }
     //创建限流器
