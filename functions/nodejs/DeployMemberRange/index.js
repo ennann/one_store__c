@@ -23,8 +23,8 @@ module.exports = async function (params, context, logger) {
   }
 
   const ruleRecord = await application.data
-    .object("object_user_rule")
-    .select(["_id", "job_position", "department", "work_team"])
+    .object('object_user_rule')
+    .select(['_id', 'job_position', 'department', 'work_team'])
     .where({ _id: user_rule._id || user_rule.id })
     .findOne();
   logger.info('object_user_rule', JSON.stringify(ruleRecord, null, 2));
@@ -39,7 +39,7 @@ module.exports = async function (params, context, logger) {
         .findStream(async records => {
           userRecords.push(...records.map(item => ({ _id: item._id, email: item._email })));
         });
-      return userRecords
+      return userRecords;
     } catch (error) {
       logger.error(`${description}查询时发生错误：`, error);
       return userList;
@@ -49,11 +49,14 @@ module.exports = async function (params, context, logger) {
   // 获取所属部门下的人员
   if (ruleRecord.department && ruleRecord.department.length > 0) {
     const departmentIds = ruleRecord.department.map(item => item._id);
-    const users = await getUserRecord({
-      _department: {
-        _id: application.operator.hasAnyOf(departmentIds)
-      }
-    }, '所属部门');
+    const users = await getUserRecord(
+      {
+        _department: {
+          _id: application.operator.hasAnyOf(departmentIds),
+        },
+      },
+      '所属部门',
+    );
     logger.info({ departmentUsers: users });
     userList.push(...users);
   }
@@ -63,18 +66,15 @@ module.exports = async function (params, context, logger) {
     const teamIds = ruleRecord.work_team.map(item => item._id);
     const teamUserList = await application.data
       .object('object_user_group_member')
-      .select("user")
+      .select('user')
       .where({
         user_group: {
-          _id: application.operator.hasAnyOf(teamIds)
-        }
+          _id: application.operator.hasAnyOf(teamIds),
+        },
       })
       .find();
-    logger.info({ teamUserList })
-    const users = await getUserRecord(
-      { _id: application.operator.hasAnyOf(teamUserList.map(item => item.user._id)) },
-      '所属用户组'
-    );
+    logger.info({ teamUserList });
+    const users = await getUserRecord({ _id: application.operator.hasAnyOf(teamUserList.map(item => item.user._id)) }, '所属用户组');
     logger.info({ teamUser: users });
     userList.push(...users);
   }
@@ -83,26 +83,26 @@ module.exports = async function (params, context, logger) {
   logger.info({ userList });
 
   if (userList.length === 0) {
-    logger.error("通过人员筛选条件获取人员列表为空");
+    logger.error('通过人员筛选条件获取人员列表为空');
     return [];
   }
 
   const client = await newLarkClient({ userId: context.user._id }, logger);
   try {
     const res = await client.contact.user.batchGetId({
-      params: { user_id_type: "open_id" },
-      data: { emails: userList.map(i => i.email) }
-    })
+      params: { user_id_type: 'open_id' },
+      data: { emails: userList.map(i => i.email) },
+    });
     logger.info({ res });
     if (res.code !== 0) {
-      throw new Error("通过人员筛选条件获取人员失败");
+      throw new Error('通过人员筛选条件获取人员失败');
     }
     return res.data.user_list.map(item => ({
       email: item.email,
-      open_id: item.user_id
-    }))
+      open_id: item.user_id,
+    }));
   } catch (error) {
-    logger.error("通过人员筛选条件获取人员失败");
-    throw new Error("通过人员筛选条件获取人员失败");
+    logger.error('通过人员筛选条件获取人员失败');
+    throw new Error('通过人员筛选条件获取人员失败');
   }
-}
+};

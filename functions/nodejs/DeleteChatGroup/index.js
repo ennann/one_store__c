@@ -11,16 +11,57 @@ const { newLarkClient } = require('../utils');
  * @return 函数的返回数据
  */
 module.exports = async function (params, context, logger) {
-  const { chat_id } = params
-  const client = await newLarkClient({ userId: context.user._id }, logger);
-  try {
-    const res = await client.im.chat.delete({
-      path: { chat_id },
-    })
-    logger.info({ res });
-    return res;
-  } catch (error) {
-    logger.error(error);
-    throw new Error(error);
+  const { chat_id } = params;
+
+  logger.info('参数', params);
+
+  if (!chat_id) {
+    logger.error('错误：缺少 chat_id 参数');
+    return { code: -1, message: '缺少 chat_id 参数' };
   }
-}
+
+  const client = await newLarkClient({ userId: context.user._id }, logger);
+
+  try {
+    // 获取群聊成员
+    let chatMembers = [];
+
+    await (async () => {
+      for await (const item of await client.im.chatMembers.getWithIterator({
+        path: {
+          chat_id: chat_id,
+        },
+        params: {
+          member_id_type: 'user_id',
+        },
+      })) {
+        chatMembers.push(...item.items);
+      }
+    })();
+
+    // chatMembers = chatMembers.items;
+
+    logger.info('获取群聊成员', JSON.stringify(chatMembers, null, 2));
+
+    // 移除群聊成员
+
+    // 判断 chatMembers 是否为空
+    if (chatMembers.length > 0) {
+      const removeMemberFromChat = async memberId => {
+        client.im.chatMembers.delete({
+          path: { chat_id },
+          params: { member_id_type: "user_id" },
+          data: { id_list: [ memberId ] },
+        });
+      };
+
+      // 使用 Promise.all() 并发移除群聊成员
+      await Promise.all(chatMembers.map(member => removeMemberFromChat(member.member_id)));
+
+      return { code: 0, message: '移除群聊成员成功' };
+    }
+    return { code: 0, message: '没有群成员可以移除' };
+  } catch (e) {
+    return { code: -1, message: '移除群聊失败'+e.message };
+  }
+};
