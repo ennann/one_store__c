@@ -1,0 +1,25 @@
+{
+    "apiID": "one_store__c__function_aadgindcfvqbs",
+    "apiName": "TaskCreateFollowingVerifyTask",
+    "label": {
+        "zh_CN": "创建验收后续任务",
+        "en_US": "Create Following Verify Task"
+    },
+    "description": {
+        "zh_CN": "根据验收任务，创建验收第一个验收任务后续的验收任务",
+        "en_US": "Create the following verify task based on the first verify task"
+    },
+    "longTaskMode": false,
+    "frontendSDKInvokable": false,
+    "input": [
+        {
+            "key": "verify_task",
+            "type": "Record",
+            "label": "验收任务",
+            "required": true,
+            "description": "验收任务记录",
+            "objectApiName": "object_task"
+        }
+    ],
+    "output": []
+}

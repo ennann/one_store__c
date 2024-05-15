@@ -1,0 +1,16 @@
+{
+  "apiID": "one_store__c__function_aadginxkovqbs",
+  "apiName": "TaskCronTrigger",
+  "label": {
+    "zh_CN": "任务定义定时触发器",
+    "en_US": "Task Definition Cron Trigger"
+  },
+  "description": {
+    "zh_CN": "定时触发，检查任务定义内的数据是否需要执行",
+    "en_US": "Cron trigger, check if the data in the task definition needs to be executed"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": []
+}
