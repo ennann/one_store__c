@@ -15,21 +15,21 @@
     {
       "key": "option_type",
       "type": "Text",
-      "label": "选项分类",
+      "label": "字段名称",
       "required": true,
       "description": ""
     },
     {
       "key": "option_api",
       "type": "Text",
-      "label": "选项值",
+      "label": "字段值",
       "required": true,
       "description": ""
     },
     {
       "key": "table_name",
       "type": "Text",
-      "label": "表名",
+      "label": "对象名",
       "required": true,
       "description": ""
     }
