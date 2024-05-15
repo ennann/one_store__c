@@ -1,0 +1,33 @@
+{
+  "apiID": "one_store__c__function_aadgirvb4jedw",
+  "apiName": "TaskClickReminder",
+  "label": {
+    "zh_CN": "【任务】任务批次催办",
+    "en_US": null
+  },
+  "description": {
+    "zh_CN": "根据任务处理记录，催办下游门店普通任务",
+    "en_US": null
+  },
+  "isPublicAPI": false,
+  "frontendSDKInvokable": false,
+  "longTaskMode": false,
+  "input": [
+    {
+      "key": "object_task_create_monitor",
+      "type": "Record",
+      "required": true,
+      "label": "任务处理记录",
+      "description": "",
+      "objectApiName": "object_task_create_monitor"
+    }
+  ],
+  "output": [
+    {
+      "key": "code",
+      "type": "Boolean",
+      "label": "催办结果",
+      "description": "催办成功【true】，催办失败【false】"
+    }
+  ]
+}

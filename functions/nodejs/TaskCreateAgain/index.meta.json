@@ -1,0 +1,33 @@
+{
+  "apiID": "one_store__c__function_aadgirwss7ghw",
+  "apiName": "TaskCreateAgain",
+  "label": {
+    "zh_CN": "【任务】任务创建重试",
+    "en_US": null
+  },
+  "description": {
+    "zh_CN": "根据任务处理记录，进行下游门店普通任务创建重试",
+    "en_US": null
+  },
+  "isPublicAPI": false,
+  "frontendSDKInvokable": false,
+  "longTaskMode": false,
+  "input": [
+    {
+      "key": "object_task_create_monitor",
+      "type": "Record",
+      "required": true,
+      "label": "任务处理记录",
+      "description": "",
+      "objectApiName": "object_task_create_monitor"
+    }
+  ],
+  "output": [
+    {
+      "key": "code",
+      "type": "Boolean",
+      "label": "任务创建重试结果",
+      "description": "任务创建重试成功【true】，任务创建重试失败【false】"
+    }
+  ]
+}

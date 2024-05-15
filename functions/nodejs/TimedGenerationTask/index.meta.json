@@ -11,6 +11,18 @@
   },
   "longTaskMode": false,
   "frontendSDKInvokable": false,
-  "input": [],
+  "input": [
+    {
+      "key": "object_task_defs",
+      "type": "RecordList",
+      "label": "任务定义列表",
+      "required": true,
+      "description": "",
+      "objectApiName": "object_task_def",
+      "fieldApiNames": [
+        "_id"
+      ]
+    }
+  ],
   "output": []
 }
