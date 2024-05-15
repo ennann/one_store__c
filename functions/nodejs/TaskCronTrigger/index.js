@@ -12,7 +12,7 @@ module.exports = async function (params, context, logger) {
     // 日志功能
     logger.info(`${new Date()} 任务触发器函数开始执行`);
 
-    const currentTime = dayjs().add(8, 'hour').valueOf(); // 当前时间
+    const currentTime = dayjs().valueOf(); // 当前时间
     const timeBuffer = 1000 * 60 * 5; // 5 minutes buffer
     logger.info('当前时间->', currentTime, dayjs(currentTime).format('YYYY-MM-DD HH:mm:ss'));
 
