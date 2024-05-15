@@ -65,39 +65,6 @@ module.exports = async function (params, context, logger) {
         'option_year': 'year'
     };
 
-<<<<<<< HEAD
-    // 一次性任务
-    const valuedOnceTaskDefineList = taskDefineRecords.filter(item => item.option_method === 'option_once' && item.boolean_public_now === false);
-    logger.info('需要触发的一次性任务定义数量->', valuedOnceTaskDefineList.length);
-
-    // 周期任务
-    const calculateTriggerTime = (startTime, repetitionRate, unit) => {
-        return dayjs(startTime).add(repetitionRate, unit).valueOf();
-    };
-
-    const valuedCycleTaskDefineList = taskDefineRecords.filter(item => item.option_method === 'option_cycle').filter(cycleTaskDefine => {
-        const { datetime_start: startTime, option_time_cycle: cycleType, repetition_rate: repetitionRate } = cycleTaskDefine;
-        const unitMapping = {
-            'option_day': 'day',
-            'option_week': 'week',
-            'option_month': 'month',
-            'option_quarter': { unit: 'month', factor: 3 },
-            'option_half_year': { unit: 'month', factor: 6 },
-            'option_year': 'year'
-        };
-
-        const { unit, factor = 1 } = typeof unitMapping[cycleType] === 'string' ? { unit: unitMapping[cycleType] } : unitMapping[cycleType];
-        const triggerTime = calculateTriggerTime(startTime, repetitionRate * factor, unit);
-
-        return triggerTime && currentTime >= triggerTime - timeBuffer && currentTime <= triggerTime + timeBuffer;
-    });
-
-    logger.info('需要触发的周期任务定义数量->', valuedCycleTaskDefineList.length);
-
-    const valuedTaskDefineList = [...valuedOnceTaskDefineList, ...valuedCycleTaskDefineList];
-    logger.info('✅ 需要触发的任务定义总数量->', valuedTaskDefineList.length);
-    return valuedTaskDefineList
-=======
     const valuedTaskDefineList = [];
 
     const calculateTriggerDates = (startDate, endDate, repetitionRate, unit) => {
@@ -160,7 +127,6 @@ module.exports = async function (params, context, logger) {
     logger.info('需要触发的任务定义数量->', valuedTaskDefineList.length);
 
     // return valuedTaskDefineList;
->>>>>>> 5ef7959 (增加关键触发器函数)
 
     // 创建一个函数，用于调用任务生成函数，最后使用 Promise.all 来并发执行 valuedTaskDefineList 内的任务定义
     const invokeTaskGenerateFunction = async taskDefine => {
