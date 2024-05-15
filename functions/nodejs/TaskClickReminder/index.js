@@ -23,7 +23,7 @@ module.exports = async function (params, context, logger) {
     //获取普通任务
     const res = await application.data.object("object_store_task")
         .select("name", "option_priority", "source_department", "task_create_time", "deadline_time","task_handler","task_chat")
-        .where({task_monitor: {_id: object_task_create_monitor._id}})
+        .where({task_monitor: {_id: object_task_create_monitor._id},task_status:application.operator.in('option_pending', 'option_transferred', 'option_rollback')})
         .find();
     //待发送飞书消息列表
     let messageCardSendDatas = []

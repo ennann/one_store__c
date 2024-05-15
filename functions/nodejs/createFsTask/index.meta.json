@@ -15,10 +15,10 @@
     {
       "key": "taskRecord",
       "type": "Record",
-      "label": "任务定义",
+      "label": "门店普通任务",
       "required": true,
       "description": "",
-      "objectApiName": "object_task_def"
+      "objectApiName": "object_store_task"
     }
   ],
   "output": []

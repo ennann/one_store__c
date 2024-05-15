@@ -27,7 +27,7 @@ module.exports = async function (params, context, logger) {
           description: taskRecord.description,
           due: {
             is_all_day: true,
-            timestamp: new Date(taskRecord.datetime_end).getTime(),
+            timestamp: new Date(taskRecord.task_plan_time).getTime(),
           },
         },
       });
@@ -51,7 +51,7 @@ module.exports = async function (params, context, logger) {
   if (data) {
     try {
       await application.data
-        .object("object_task_def")
+        .object("object_store_task")
         .update(
           taskRecord._id,
           { task_guid: data.taskGuid }

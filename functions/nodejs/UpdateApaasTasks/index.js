@@ -13,5 +13,9 @@ module.exports = async function (params, context, logger) {
   // 日志功能
   logger.info(`更新Apaas任务状态 函数开始执行`);
 
-  
+  const undoneList =  await application.data
+  .object("object_task_def")
+  .where({
+    
+  })
 }

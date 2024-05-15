@@ -119,6 +119,7 @@ module.exports = async function (params, context, logger) {
             data.receive_id = feishuChat.chat_id
             messageCardSendDatas.push(data);
         } else {
+            // TODO 判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
             const feishuPeople = await application.data.object('_user')
                 .select('_id', '_email')
                 .where({_id: objectStoreTaskElement.task_handler._id}).findOne();
