@@ -16,6 +16,15 @@ module.exports = async function (params, context, logger) {
   // https://open.feishu.cn/document/server-docs/im-v1/message/create?appId=cli_a68809f3b7f9500d
   logger.info({ params });
   const { message_def } = params;
+
+  // redis判断是否存在执行中任务
+  const KEY = message_def._id;
+  const redisValue = await baas.redis.get(KEY);
+  logger.info({ redisValue });
+  if (redisValue) return;
+  const redisRes = await baas.redis.set(KEY, new Date().getTime());
+  logger.info({ redisRes });
+
   let receive_id_type = message_def.send_channel === "option_group" ? "chat_id" : "open_id";
   let sendIds = []
 
@@ -53,7 +62,7 @@ module.exports = async function (params, context, logger) {
     } catch (error) {
       if (errorNum >= MAX_ERROR_NUM) {
         errorNum = 0;
-        throw new Error(`获取图片失败超过最大次数${MAX_ERROR_NUM} - `, error);
+        logger.error(`获取图片失败超过最大次数${MAX_ERROR_NUM} - `, error);
       }
       logger.error(error);
       errorNum += 1;
@@ -92,7 +101,7 @@ module.exports = async function (params, context, logger) {
       if (divContent !== "") {
         const element = [];
         let style = [];
-        // 检查是否包含样式
+        // 检查是否包含样式,飞书富文本只支持以下4种字体样式
         if (/<b>/.test(divContent)) style.push("bold");
         if (/<i>/.test(divContent)) style.push("italic");
         if (/<u>/.test(divContent)) style.push("underline");
@@ -160,7 +169,7 @@ module.exports = async function (params, context, logger) {
           tag: "plain_text"
         }
       }
-    }
+    };
     return {
       msg_type: "interactive",
       content: JSON.stringify(info)
@@ -179,7 +188,7 @@ module.exports = async function (params, context, logger) {
         };
       // 视频类型消息直接发成文本类型
       case 'option_video':
-        const textObj = { text: `${message_def.message_title} ${message_def.video_url}` }
+        const textObj = { text: `${message_def.message_title} ${message_def.video_url}` };
         return {
           msg_type: "text",
           content: JSON.stringify(textObj)
@@ -220,7 +229,7 @@ module.exports = async function (params, context, logger) {
     } catch (error) {
       if (errorNum >= MAX_ERROR_NUM) {
         errorNum = 0;
-        throw new Error(`发送消息失败超过最大次数${MAX_ERROR_NUM} - `, error)
+        logger.error(`发送消息失败超过最大次数${MAX_ERROR_NUM} - `, paramsData);
       }
       logger.error(error);
       errorNum += 1;
@@ -234,4 +243,5 @@ module.exports = async function (params, context, logger) {
       await sendMessage(id);
     }
   }
+  await baas.redis.set(KEY, null);
 };

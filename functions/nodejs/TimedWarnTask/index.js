@@ -35,9 +35,11 @@ module.exports = async function (params, context, logger) {
         let taskPlanTime = dayjs(re.task_plan_time);
         //告警时间：当前时间 + 任务到期前提醒时间（小时）
         let number = Number.parseInt(re.warning_time);
-        let warningTime = nowTime.add(number, 'hour');
-        //当前时间 + 任务到期前提醒时间（小时） 晚于 要求完成时间
-        if (!warningTime.isBefore(taskPlanTime)) {
+        let warningEndTime = nowTime.add(number, 'hour');
+        let warnindStartTime = nowTime.add(number - 1, 'hour');
+        //当前时间 + 任务到期前提醒时间（小时） 晚于 要求完成时间  && 一个小时内
+        if (!warningEndTime.isBefore(taskPlanTime) && warnindStartTime.isBefore(taskPlanTime)) {
+            //一个小时内
             object_store_task.push(re);
         }
     }

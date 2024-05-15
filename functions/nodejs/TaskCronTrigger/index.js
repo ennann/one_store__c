@@ -14,11 +14,12 @@ module.exports = async function (params, context, logger) {
     // 日志功能
     logger.info(`${new Date()} 任务触发器函数开始执行`);
 
-    const currentTime = dayjs().valueOf(); // 当前时间
+    const currentTime = dayjs().add(8, 'hour').valueOf(); // 当前时间
+    const timeBuffer = 1000 * 60 * 5; // 5 minutes buffer
     logger.info('当前时间->', currentTime, dayjs(currentTime).format('YYYY-MM-DD HH:mm:ss'));
 
     // 查询所有的任务定义数据
-    let taskDefineRecords = await application.data
+    const taskDefineRecords = await application.data
         .object('object_task_def')
         .select(
             '_id',
@@ -33,7 +34,7 @@ module.exports = async function (params, context, logger) {
             'datetime_end',
             'boolean_public_now',
             'datetime_publish', // 发布时间
-            'option_status', // 等于 option_enable
+            'option_status' // 等于 option_enable
         )
         .where(
             _.or(
@@ -41,16 +42,16 @@ module.exports = async function (params, context, logger) {
                     option_status: 'option_enable',
                     option_method: 'option_cycle',
                     datetime_start: _.lte(currentTime),
-                    datetime_end: _.gte(currentTime),
+                    datetime_end: _.gte(currentTime)
                 }), // 周期任务的条件
                 _.and({
                     option_status: 'option_enable',
                     option_method: 'option_once',
                     boolean_public_now: false,
-                    datetime_publish: _.lte(currentTime + 1000 * 60 * 5), // 5分钟内的任务
-                    datetime_publish: _.gte(currentTime - 1000 * 60 * 5),
-                }), // 一次性任务的条件
-            ),
+                    datetime_publish: _.lte(currentTime + timeBuffer), // 5分钟内的任务
+                    datetime_publish: _.gte(currentTime - timeBuffer)
+                }) // 一次性任务的条件
+            )
         )
         .find();
 
@@ -59,56 +60,54 @@ module.exports = async function (params, context, logger) {
 
     // 根据任务定义判断是否需要调用任务生成函数
 
-    
-    // 第一种：一次性任务
-    // 任务定义中的 option_method 为 option_once，并且 boolean_public_now 为 false
-    let valuedOnceTaskDefineList = taskDefineRecords.filter(
-        (item) => item.option_method === 'option_once' && item.boolean_public_now === false,
-    );
+    // 一次性任务
+    const valuedOnceTaskDefineList = taskDefineRecords.filter(item => item.option_method === 'option_once' && item.boolean_public_now === false);
     logger.info('需要触发的一次性任务定义数量->', valuedOnceTaskDefineList.length);
 
+    // 周期任务
+    const calculateTriggerTime = (startTime, repetitionRate, unit) => {
+        return dayjs(startTime).add(repetitionRate, unit).valueOf();
+    };
 
-    // 第二种：周期任务
-    // 任务定义中的 option_method 为 option_cycle
-    let valuedCycleTaskDefineList = [];
-    let cycleTaskDefineList = taskDefineRecords.filter((item) => item.option_method === 'option_cycle');
-    for (let i = 0; i < cycleTaskDefineList.length; i++) {
-        let cycleTaskDefine = cycleTaskDefineList[i];
-        // 获取到 cycleTaskDefine 的 datetime_start 时间，但是仅仅获取到小时和分钟，日期部分修改为当天的日期
-        let hourMinute = dayjs(cycleTaskDefine.datetime_start).format('HH:mm');
-        let triggerTime = dayjs(`${dayjs().format('YYYY-MM-DD')} ${hourMinute}`).valueOf();
-        // 如果 currentTime 在 triggerTime +- 5分钟内，那么就是需要触发的周期任务
-        if (currentTime >= triggerTime - 1000 * 60 * 5 && currentTime <= triggerTime + 1000 * 60 * 5) {
-            valuedCycleTaskDefineList.push(cycleTaskDefine);
-        }
-    }
+    const valuedCycleTaskDefineList = taskDefineRecords.filter(item => item.option_method === 'option_cycle').filter(cycleTaskDefine => {
+        const { datetime_start: startTime, option_time_cycle: cycleType, repetition_rate: repetitionRate } = cycleTaskDefine;
+        const unitMapping = {
+            'option_day': 'day',
+            'option_week': 'week',
+            'option_month': 'month',
+            'option_quarter': { unit: 'month', factor: 3 },
+            'option_half_year': { unit: 'month', factor: 6 },
+            'option_year': 'year'
+        };
+
+        const { unit, factor = 1 } = typeof unitMapping[cycleType] === 'string' ? { unit: unitMapping[cycleType] } : unitMapping[cycleType];
+        const triggerTime = calculateTriggerTime(startTime, repetitionRate * factor, unit);
+
+        return triggerTime && currentTime >= triggerTime - timeBuffer && currentTime <= triggerTime + timeBuffer;
+    });
+
     logger.info('需要触发的周期任务定义数量->', valuedCycleTaskDefineList.length);
 
-    const valuedTaskDefineList = valuedOnceTaskDefineList.concat(valuedCycleTaskDefineList);
-
-    logger.info('✅ 需要触发的周期任务定义总数量->', valuedTaskDefineList.length);
-    logger.info(valuedTaskDefineList);
-    return valuedTaskDefineList;
+    const valuedTaskDefineList = [...valuedOnceTaskDefineList, ...valuedCycleTaskDefineList];
+    logger.info('✅ 需要触发的任务定义总数量->', valuedTaskDefineList.length);
+    return valuedTaskDefineList
 
     // 创建一个函数，用于调用任务生成函数，最后使用 Promise.all 来并发执行 valuedTaskDefineList 内的任务定义
-    const invokeTaskGenerateFunction = async (taskDefine) => {
+    const invokeTaskGenerateFunction = async taskDefine => {
         // 调用任务生成函数
-        const taskGenerateFunction = faas.function('TimedGenerationTask').invoke(taskDefine);
-        return taskGenerateFunction;
+        return faas.function('TimedGenerationTask').invoke(taskDefine);
     };
 
     // 并发执行任务生成函数
-    let taskGenerationResult = await Promise.all(valuedTaskDefineList.map(invokeTaskGenerateFunction));
+    const taskGenerationResult = await Promise.all(valuedTaskDefineList.map(invokeTaskGenerateFunction));
     logger.info('任务生成函数执行结果->', taskGenerationResult);
 
-    let successList = taskGenerationResult.filter((item) => item.code == 0);
-    let failList = taskGenerationResult.filter((item) => item.code != 0);
+    const successList = taskGenerationResult.filter(item => item.code === 0);
+    const failList = taskGenerationResult.filter(item => item.code !== 0);
 
     return {
         message: '任务触发器函数执行成功',
         successList,
-        failList,
+        failList
     };
-
-    
 };

@@ -12,19 +12,20 @@ const {createLimiter} = require('../utils');
 module.exports = async function (params, context, logger) {
     // 日志功能
     logger.info(`定时生成任务记录函数开始执行 ${new Date()}`);
-
+    //获取符合条件的任务定义记录列表（内部获取）
     //一次性非立即发布任务
-    const query = {
-        option_status: "option_02", //启用
-    };
+    // const query = {
+    //     option_status: "option_02", //启用
+    // };
+    // let finalTaskDefList = await fetchTaskDefRecords(query, '一次性非立即发布任务', logger);
 
-    //获取符合条件的任务定义记录列表
-    let finalTaskDefList = await fetchTaskDefRecords(query, '一次性非立即发布任务', logger);
-
-    if (finalTaskDefList.length === 0) {
-        logger.warn('查询满足条件的一次性非立即发布任务记录为0');
-        return {code: -2, message: '未找到有效的任务定义记录'};
+    const { object_task_defs } = params;
+    if (!object_task_defs){
+        logger.warn('未传入有效的任务定义记录');
+        return {code: -2, message: '未传入有效的任务定义记录'};
     }
+    //组装当前未在发送状态的任务定义数据
+    const finalTaskDefList = object_task_defs.map(item => item);
     // 为每个任务定义实例记录生成任务批次号并创建任务处理记录
     const taskCreateResults = await Promise.all(finalTaskDefList.map(task => createTaskMonitorEntry(task, logger)));
 
@@ -35,7 +36,9 @@ module.exports = async function (params, context, logger) {
     //创建门店普通任务
     const finaTaskMonitorEntryList = [];
     for (let i = 0; i < successfulTasks.length; i++) {
-        const task_id = successfulTasks[i]?.task_id;
+        //将任务定义的id从redis中删除
+        await kunlun.redis.del(successfulTasks[i]?.task_id);
+        const task_id = successfulTasks[i]?.task_create_monitor_id;
         const query = {
             _id: task_id
         }
@@ -117,6 +120,22 @@ async function createTaskMonitorEntry(task, logger) {
     try {
         const taskBatchNo = await faas.function('GetTaskBatchNumber').invoke({object_task_def: task});
         const batch_no = task._id + '-' + taskBatchNo.batch_no;
+        //判断redis中是否含有任务定义主键
+        const value = await kunlun.redis.get(task._id);
+        if (value != null){
+            logger.warn(`创建任务定义[${task._id}]的任务处理记录失败->该任务定义正在执行中...`);
+           return {code: -1, message: `创建任务定义[${task._id}]的任务处理记录失败->当前任务定义的任务处理记录正在生成中...`,task_id: task._id};
+        }
+        let res = await application.data.object('object_task_create_monitor').select("_id")
+            .where(
+                {task_def:{_id:task._id}}
+            )
+            .findOne();
+        if (res){
+            logger.warn(`创建任务定义[${task._id}]的任务处理记录失败->该任务定义当天任务处理记录已存在...`);
+           return {code: -1, message: `创建任务定义[${task._id}]的任务处理记录失败->当前任务定义当天任务处理记录已存在...`,task_id: task._id};
+        }
+        await kunlun.redis.set(task._id,batch_no);
         //创建任务处理记录
         const createData = {
             task_def: {_id: task._id},
@@ -124,8 +143,8 @@ async function createTaskMonitorEntry(task, logger) {
             option_status: "option_01",
             task_create_time: dayjs().valueOf(),
         };
-        const createDataId = await application.data.object('object_task_create_monitor').create(createData);
-        return {code: 0, message: '成功创建任务处理记录', task_id: createDataId._id};
+        const createDataResult = await application.data.object('object_task_create_monitor').create(createData);
+        return {code: 0, message: `创建任务定义[${task._id}]的任务处理记录成功`, task_id: task._id,task_create_monitor_id:createDataResult._id};
     } catch (error) {
         logger.error(`创建任务处理记录[${task._id}]失败-->`, error);
         return {code: -1, message: error.message, task_id: task._id};
@@ -133,17 +152,16 @@ async function createTaskMonitorEntry(task, logger) {
 }
 
 async function createStoreTaskEntry(task, logger) {
+    const query = {
+        _id: task.task_def._id,
+    };
+    //获取符合条件的任务定义记录列表
+    let finalTaskDefList = await fetchTaskDefRecords(query, '根据ID查询任务定义', logger);
+    const createDatas = [];
     try {
-        const query = {
-            _id: task.task_def._id,
-        };
-        //获取符合条件的任务定义记录列表
-        let finalTaskDefList = await fetchTaskDefRecords(query, '根据ID查询任务定义', logger);
-        const createDatas = [];
         for (let i = 0; i < finalTaskDefList.length; i++) {
             const item = finalTaskDefList[i];
             let task_plan_time = dayjs(item.datetime_start).add(item.deal_duration, 'day').valueOf();
-
             //飞书群
             if (item.option_handler_type === "option_01") {
                 const createData = {
