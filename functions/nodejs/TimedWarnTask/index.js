@@ -24,7 +24,18 @@ module.exports = async function (params, context, logger) {
     }
     logger.info("query--->", query);
     let res = await application.data.object("object_store_task")
-        .select("_id", "name", "description", "task_chat", "task_handler", "task_plan_time", "warning_time")
+        .select(
+            "_id",
+            "name",
+            "description",
+            "task_chat",
+            "task_handler",
+            "task_plan_time",
+            "warning_time",
+            "option_priority",
+            "source_department",
+            "task_create_time",
+            "deadline_time",)
         .where(query).find();
     logger.info("查询[待处理&已转办&退回]门店普通任务记录数量->", res.length);
     const object_store_task = [];
@@ -58,7 +69,28 @@ module.exports = async function (params, context, logger) {
                 {
                     "tag": "div",
                     "text": {
-                        "content": description,
+                        "content": "任务优先级：" + objectStoreTaskElement.option_priority,
+                        "tag": "plain_text"
+                    }
+                },
+                {
+                    "tag": "div",
+                    "text": {
+                        "content": "任务来源：" + objectStoreTaskElement.source_department._name,
+                        "tag": "plain_text"
+                    }
+                },
+                {
+                    "tag": "div",
+                    "text": {
+                        "content": "任务下发时间：" + objectStoreTaskElement.task_create_time,
+                        "tag": "plain_text"
+                    }
+                },
+                {
+                    "tag": "div",
+                    "text": {
+                        "content": "距离截至时间还有" + objectStoreTaskElement.deadline_time + "小时",
                         "tag": "plain_text"
                     }
                 }
@@ -66,7 +98,7 @@ module.exports = async function (params, context, logger) {
             "header": {
                 "template": "turquoise",
                 "title": {
-                    "content": "【到期提醒】" + name,
+                    "content": "【任务到期提醒】有一条"+name+"门店任务请尽快处理！",
                     "tag": "plain_text"
                 }
             }

@@ -1,4 +1,8 @@
 {
-  "params": {},
+  "params": {
+    "object_task_create_monitor": {
+      "_id":
+    }
+  },
   "context": {}
 }

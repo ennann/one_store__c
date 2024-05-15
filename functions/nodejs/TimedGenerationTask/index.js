@@ -290,7 +290,28 @@ async function createStoreTaskEntryStart(task, logger) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": description,
+                            "content": "任务优先级：" + task.option_priority,
+                            "tag": "plain_text"
+                        }
+                    },
+                    {
+                        "tag": "div",
+                        "text": {
+                            "content": "任务来源：" + task.source_department._name,
+                            "tag": "plain_text"
+                        }
+                    },
+                    {
+                        "tag": "div",
+                        "text": {
+                            "content": "任务下发时间：" + task.task_create_time,
+                            "tag": "plain_text"
+                        }
+                    },
+                    {
+                        "tag": "div",
+                        "text": {
+                            "content": "距离截至时间还有" + task.deadline_time + "小时",
                             "tag": "plain_text"
                         }
                     }
@@ -298,7 +319,7 @@ async function createStoreTaskEntryStart(task, logger) {
                 "header": {
                     "template": "turquoise",
                     "title": {
-                        "content": name,
+                        "content": "【任务发布】有一条"+name+"门店任务请尽快处理！",
                         "tag": "plain_text"
                     }
                 }
