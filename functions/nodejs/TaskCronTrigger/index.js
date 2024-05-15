@@ -1,5 +1,3 @@
-// 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
-// 如安装 linq 包后就可以引入并使用这个包
 const dayjs = require('dayjs');
 const _ = application.operator;
 
@@ -58,8 +56,16 @@ module.exports = async function (params, context, logger) {
     logger.info('查询到的任务定义数量->', taskDefineRecords.length);
     logger.info(taskDefineRecords);
 
-    // 根据任务定义判断是否需要调用任务生成函数
+    const unitMapping = {
+        'option_day': 'day',
+        'option_week': 'week',
+        'option_month': 'month',
+        'option_quarter': { unit: 'month', factor: 3 },
+        'option_half_year': { unit: 'month', factor: 6 },
+        'option_year': 'year'
+    };
 
+<<<<<<< HEAD
     // 一次性任务
     const valuedOnceTaskDefineList = taskDefineRecords.filter(item => item.option_method === 'option_once' && item.boolean_public_now === false);
     logger.info('需要触发的一次性任务定义数量->', valuedOnceTaskDefineList.length);
@@ -91,6 +97,70 @@ module.exports = async function (params, context, logger) {
     const valuedTaskDefineList = [...valuedOnceTaskDefineList, ...valuedCycleTaskDefineList];
     logger.info('✅ 需要触发的任务定义总数量->', valuedTaskDefineList.length);
     return valuedTaskDefineList
+=======
+    const valuedTaskDefineList = [];
+
+    const calculateTriggerDates = (startDate, endDate, repetitionRate, unit) => {
+        const triggerDates = [];
+        let nextTriggerDate = startDate;
+
+        while (nextTriggerDate.isBefore(endDate) || nextTriggerDate.isSame(endDate)) {
+            triggerDates.push(nextTriggerDate.format('YYYY-MM-DD'));
+            nextTriggerDate = nextTriggerDate.add(repetitionRate, unit);
+        }
+
+        return triggerDates;
+    };
+
+    const isTriggerTime = (currentTime, triggerTime, timeBuffer) => {
+        return currentTime >= triggerTime - timeBuffer && currentTime <= triggerTime + timeBuffer;
+    };
+
+    // 循环所有 taskDefineRecords
+    for (const task of taskDefineRecords) {
+        if (task.option_method === 'option_once') {
+            valuedTaskDefineList.push(task);
+            logger.info(`一次性任务: ${task.name}`);
+            continue;
+        }
+
+        if (task.option_method === 'option_cycle') {
+            const { datetime_start: startTime, datetime_end: endTime, option_time_cycle: cycleType, repetition_rate: repetitionRate } = task;
+            const startDate = dayjs(startTime);
+            const endDate = dayjs(endTime);
+            let unit, factor = 1;
+
+            if (unitMapping[cycleType]) {
+                if (typeof unitMapping[cycleType] === 'object') {
+                    unit = unitMapping[cycleType].unit;
+                    factor = unitMapping[cycleType].factor;
+                } else {
+                    unit = unitMapping[cycleType];
+                }
+            } else {
+                logger.warn(`未知的周期类型: ${cycleType}`);
+                continue;
+            }
+
+            const triggerDates = calculateTriggerDates(startDate, endDate, repetitionRate * factor, unit);
+
+            logger.info(`周期任务: ${task.name} 触发日期数组: ${triggerDates.join(', ')}`);
+            
+            if (triggerDates.includes(dayjs(currentTime).format('YYYY-MM-DD'))) {
+                const triggerTime = dayjs(`${dayjs(currentTime).format('YYYY-MM-DD')} ${startDate.format('HH:mm:ss')}`).valueOf();
+
+                if (isTriggerTime(currentTime, triggerTime, timeBuffer)) {
+                    valuedTaskDefineList.push(task);
+                    logger.info(`周期任务: ${task.name} 触发时间: ${triggerTime}, ${dayjs(triggerTime).format("YYYY-MM-DD HH:mm:ss")}`);
+                }
+            }
+        }
+    }
+
+    logger.info('需要触发的任务定义数量->', valuedTaskDefineList.length);
+
+    // return valuedTaskDefineList;
+>>>>>>> 5ef7959 (增加关键触发器函数)
 
     // 创建一个函数，用于调用任务生成函数，最后使用 Promise.all 来并发执行 valuedTaskDefineList 内的任务定义
     const invokeTaskGenerateFunction = async taskDefine => {
