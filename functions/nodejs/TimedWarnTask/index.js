@@ -69,21 +69,21 @@ module.exports = async function (params, context, logger) {
                 {
                     "tag": "div",
                     "text": {
-                        "content": "任务优先级：" + objectStoreTaskElement.option_priority,
+                        "content": "任务优先级：" + await faas.function("GetOptionName").invoke({table_name:"object_store_task",option_type:"option_priority",option_api:object_store_task.option_priority}),
                         "tag": "plain_text"
                     }
                 },
                 {
                     "tag": "div",
                     "text": {
-                        "content": "任务来源：" + objectStoreTaskElement.source_department._name,
+                        "content": "任务来源：" + objectStoreTaskElement.source_department.name,
                         "tag": "plain_text"
                     }
                 },
                 {
                     "tag": "div",
                     "text": {
-                        "content": "任务下发时间：" + objectStoreTaskElement.task_create_time,
+                        "content": "任务下发时间：" + dayjs(objectStoreTaskElement.task_create_time).format('YYYY-MM-DD HH:mm:ss'),
                         "tag": "plain_text"
                     }
                 },

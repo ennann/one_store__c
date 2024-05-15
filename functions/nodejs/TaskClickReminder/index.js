@@ -1,7 +1,8 @@
 // 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
 // 如安装 linq 包后就可以引入并使用这个包
 // const linq = require("linq");
-const {createLimiter} = require("../utils");
+const {createLimiter, newLarkClient} = require("../utils");
+const dayjs = require("dayjs");
 /**
  * @param {Params}  params     自定义参数
  * @param {Context} context    上下文参数，可通过此参数下钻获取上下文变量信息等
@@ -18,6 +19,7 @@ module.exports = async function (params, context, logger) {
         logger.warn("未传入任务处理记录")
         return {code: false, message: "未传入任务处理记录"}
     }
+    let client = await newLarkClient({ userId: context.user._id }, logger);
     //获取普通任务
     const res = await application.data.object("object_store_task")
         .select("name", "option_priority", "source_department", "task_create_time", "deadline_time","task_handler","task_chat")
@@ -25,8 +27,11 @@ module.exports = async function (params, context, logger) {
         .find();
     //待发送飞书消息列表
     let messageCardSendDatas = []
-    for (const item in res) {
-        const name = item.description;
+    let taskCount = 0;
+    let userCount = 0;
+    for (let i = 0; i < res.length; i++) {
+        const item = res[i];
+        logger.info(i+"---------item->",JSON.stringify(item,null,2));
         const content = {
             "config": {
                 "wide_screen_mode": true
@@ -35,21 +40,21 @@ module.exports = async function (params, context, logger) {
                 {
                     "tag": "div",
                     "text": {
-                        "content": "任务优先级：" + item.option_priority,
+                        "content": "任务优先级：" + await faas.function("GetOptionName").invoke({table_name:"object_store_task",option_type:"option_priority",option_api:item.option_priority}),
                         "tag": "plain_text"
                     }
                 },
                 {
                     "tag": "div",
                     "text": {
-                        "content": "任务来源：" + item.source_department._name,
+                        "content": "任务来源：" + item.source_department.name,
                         "tag": "plain_text"
                     }
                 },
                 {
                     "tag": "div",
                     "text": {
-                        "content": "任务下发时间：" + item.task_create_time,
+                        "content": "任务下发时间：" + dayjs(item.task_create_time).format('YYYY-MM-DD HH:mm:ss'),
                         "tag": "plain_text"
                     }
                 },
@@ -64,7 +69,7 @@ module.exports = async function (params, context, logger) {
             "header": {
                 "template": "turquoise",
                 "title": {
-                    "content": "【催办消息】有一条"+name+"门店任务请尽快处理！",
+                    "content": "【催办消息】有一条"+item.name+"门店任务请尽快处理！",
                     "tag": "plain_text"
                 }
             }
@@ -84,6 +89,7 @@ module.exports = async function (params, context, logger) {
             data.receive_id_type = "chat_id"
             data.receive_id = feishuChat.chat_id
             messageCardSendDatas.push(data);
+            taskCount++;
         } else {
             const feishuPeople = await application.data.object('_user')
                 .select('_id', '_email')
@@ -103,15 +109,17 @@ module.exports = async function (params, context, logger) {
                 }));
                 data.receive_id = user[0].open_id;
                 messageCardSendDatas.push(data);
+                userCount++;
             } catch (error) {
                 logger.error(`[${feishuPeople._id}]用户邮箱为null！`, error);
             }
         }
     }
+    logger.info("messageCardSendDatas->",messageCardSendDatas);
     //创建限流器
     const limitedsendFeishuMessage = createLimiter(sendFeishuMessage);
     //发送飞书卡片消息
-    logger.info(`任务一键催办待发送飞书消息数量->${messageCardSendDatas.length}`);
+    logger.info(`任务一键催办待发送飞书消息数量->${messageCardSendDatas.length},待发群组数量->${taskCount},待发用户数量->${userCount}`,);
     const sendFeishuMessageResults = await Promise.all(messageCardSendDatas.map(messageCardSendData => limitedsendFeishuMessage(messageCardSendData)));
     const sendFeishuMessageSuccess = sendFeishuMessageResults.filter(result => result.code === 0);
     const sendFeishuMessageFail = sendFeishuMessageResults.filter(result => result.code !== 0);
