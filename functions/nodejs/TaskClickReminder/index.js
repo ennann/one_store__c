@@ -91,6 +91,7 @@ module.exports = async function (params, context, logger) {
             messageCardSendDatas.push(data);
             taskCount++;
         } else {
+            // TODO 判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
             const feishuPeople = await application.data.object('_user')
                 .select('_id', '_email')
                 .where({_id: item.task_handler._id}).findOne();

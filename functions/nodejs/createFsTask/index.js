@@ -46,24 +46,60 @@ module.exports = async function (params, context, logger) {
   };
 
   const data = await createTask();
+  const userList = await faas.function('DeployMemberRange').invoke({ user_rule: taskRecord.user_rule });
+  
   if (data) {
     try {
+      await application.data
+        .object("object_task_def")
+        .update(
+          taskRecord._id,
+          { task_guid: data.taskGuid }
+        );
       const res = await client.task.v2.task.addMembers({
         path: { task_guid: data.taskGuid },
         data: {
-          members: [{
+          members: userList.map(item => ({
             role: 'assignee',
-            id: "ou_ac1f06d7be75633f74165a487da8cf3d"
-          }]
+            id: item.open_id
+          }))
         },
       });
       logger.info({ res });
 
       if (res.code !== 0) {
-        logger.error('添加任务负责人失败', res.msg);
+        logger.error('添加任务负责人失败', res);
       }
     } catch (e) {
       logger.error(e)
     }
   }
 }
+
+// const userList = [
+//   {
+//     email: 'wangshujian@bytedance.com',
+//     open_id: 'ou_36c533e1bfe5010ab11f5420e8a76651',
+//     _id: 1798280532476963
+//   },
+//   {
+//     email: 'liujinxiang@bytedance.com',
+//     open_id: 'ou_e4ff6dfa99c7e8573d461532b3c61159',
+//     _id: 1798281387786314
+//   },
+//   {
+//     email: 'liuhao@bytedance.com',
+//     open_id: 'ou_d3cec0e220bf8206bfd83ced8250462c',
+//     _id: 1798281746550820
+//   },
+//   {
+//     email: 'zhaoyizhe@bytedance.com',
+//     open_id: 'ou_e2999ed80997a3d5817c37815fcb99ac',
+//     _id: 1798281554498611
+//   },
+//   {
+//     email: 'huanghongzhi.4207@bytedance.com',
+//     open_id: 'ou_ac1f06d7be75633f74165a487da8cf3d',
+//     _id: 1798564594579460
+//   }
+// ];

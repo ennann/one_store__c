@@ -1,0 +1,16 @@
+{
+  "apiID": "one_store__c__function_aadgislaad4ci",
+  "apiName": "UpdateApaasTasks",
+  "label": {
+    "zh_CN": "飞书任务-遍历更新apaas任务",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "自定义函数",
+    "en_US": "Custom Function"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [],
+  "output": []
+}
