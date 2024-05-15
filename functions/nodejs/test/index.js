@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-// 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
-// 如安装 linq 包后就可以引入并使用这个包
-=======
->>>>>>> 5ef7959 (增加关键触发器函数)
 const dayjs = require('dayjs');
 const _ = application.operator;
 
@@ -14,81 +9,6 @@ const _ = application.operator;
  * @return 函数的返回数据
  */
 module.exports = async function (params, context, logger) {
-<<<<<<< HEAD
-  // 日志功能
-  logger.info(`${new Date()} 消息触发器函数开始执行`);
-
-  const currentTime = dayjs().valueOf(); // 当前时间
-  const timeBuffer = 1000 * 60 * 5; // 5 minutes buffer
-  logger.info('当前时间->', currentTime, dayjs(currentTime).format('YYYY-MM-DD HH:mm:ss'));
-
-  const once = await application.data
-    .object('object_chat_message_def')
-    .select(
-      '_id',
-      'title',
-      'chat_rule',
-      'user_rule',
-      'option_method',
-      'option_time_cycle', // 天、周、月、季度、年
-      'repetition_rate', // 重复频次
-      'datetime_start', // 重复任务开始时间
-      'datetime_end', // 重复任务结束时间
-      'boolean_public_now',
-      'datetime_publish', // 发布时间
-      'option_status' // 等于 option_enable
-    ).where(
-      _.and({
-        option_status: 'option_enable',
-        option_method: 'option_once',
-        boolean_public_now: false,
-        datetime_publish: _.lte(currentTime + timeBuffer), // 5分钟内的消息
-        datetime_publish: _.gte(currentTime - timeBuffer)
-      }) // 一次性消息的条件
-
-    )
-    .find();
-  logger.info("一次性消息", once)
-
-  // 查询所有的消息定义数据
-  const messageDefineRecords = await application.data
-    .object('object_chat_message_def')
-    .select(
-      '_id',
-      'title',
-      'chat_rule',
-      'user_rule',
-      'option_method',
-      'option_time_cycle', // 天、周、月、季度、年
-      'repetition_rate', // 重复频次
-      'datetime_start', // 重复任务开始时间
-      'datetime_end', // 重复任务结束时间
-      'boolean_public_now',
-      'datetime_publish', // 发布时间
-      'option_status' // 等于 option_enable
-    )
-    .where(
-      _.or(
-        _.and({
-          option_status: 'option_enable',
-          option_method: 'option_cycle',
-          datetime_start: _.lte(currentTime),
-          datetime_end: _.gte(currentTime)
-        }), // 周期消息的条件
-        _.and({
-          option_status: 'option_enable',
-          option_method: 'option_once',
-          boolean_public_now: false,
-          datetime_publish: _.lte(currentTime + timeBuffer), // 5分钟内的消息
-          datetime_publish: _.gte(currentTime - timeBuffer)
-        }) // 一次性消息的条件
-      )
-    )
-    .find();
-  logger.info('查询到的消息定义数量->', messageDefineRecords.length);
-  logger.info(messageDefineRecords);
-}
-=======
     // 日志功能
     logger.info(`${new Date()} 消息触发器函数开始执行`);
 
@@ -233,4 +153,3 @@ module.exports = async function (params, context, logger) {
         failList,
     };
 };
->>>>>>> 5ef7959 (增加关键触发器函数)
