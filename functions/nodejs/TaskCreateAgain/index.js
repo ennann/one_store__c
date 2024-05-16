@@ -209,7 +209,7 @@ async function createStoreTaskEntryStart(task, logger, client) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "距离截至时间还有" + task.deadline_time.toFixed(2) + "小时",
+                            "content": "距离截至时间还有" + Number.parseFloat(task.deadline_time).toFixed(2) + "小时",
                             "tag": "plain_text"
                         }
                     },
