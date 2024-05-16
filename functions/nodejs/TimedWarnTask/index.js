@@ -61,6 +61,11 @@ module.exports = async function (params, context, logger) {
     for (const objectStoreTaskElement of object_store_task) {
         let name = objectStoreTaskElement.name;
         let description = objectStoreTaskElement.description
+        let priority = await faas.function("GetOptionName").invoke({
+            table_name: "object_store_task",
+            option_type: "option_priority",
+            option_api: objectStoreTaskElement.option_priority
+        });
         const content = {
             "config": {
                 "wide_screen_mode": true
@@ -69,7 +74,7 @@ module.exports = async function (params, context, logger) {
                 {
                     "tag": "div",
                     "text": {
-                        "content": "任务优先级：" + await faas.function("GetOptionName").invoke({table_name:"object_store_task",option_type:"option_priority",option_api:object_store_task.option_priority}),
+                        "content": "任务优先级：" + priority.option_name,
                         "tag": "plain_text"
                     }
                 },
@@ -98,7 +103,7 @@ module.exports = async function (params, context, logger) {
             "header": {
                 "template": "turquoise",
                 "title": {
-                    "content": "【任务到期提醒】有一条"+name+"门店任务请尽快处理！",
+                    "content": "【任务到期提醒】有一条" + name + "门店任务请尽快处理！",
                     "tag": "plain_text"
                 }
             }
@@ -122,17 +127,23 @@ module.exports = async function (params, context, logger) {
             //判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
             let object_task_def = await application.data.object("object_task_def")
                 .select("_id", "send_channel")
-                .where().findOne();
+                .where({_id: objectStoreTaskElement.task_def._id || objectStoreTaskElement.task_def.id}).findOne();
             if (object_task_def.send_channel === "option_group") {
                 data.receive_id_type = "chat_id"
+                //获取部门，通过用户
+                let user = await application.data.object("_user")
+                    .select("_id", "_department")
+                    .where({_id: objectStoreTaskElement.task_handler._id || task.task_handler.id}).findOne();
+                // logger.info("通过用户获取部门----->",JSON.stringify(user,null,2));
+                //通过部门ID获取飞书群ID
                 let object_feishu_chat = await application.data.object("object_feishu_chat")
                     .select("_id", "chat_id")
-                    .where({department: objectStoreTaskElement.task_handler.department._id}).findOne();
+                    .where({department: user._department._id || user._department.id}).findOne();
                 data.receive_id = object_feishu_chat.chat_id
                 messageCardSendDatas.push(data);
             } else {
                 const feishuPeople = await application.data.object('_user')
-                    .select('_id', '_email',"_name")
+                    .select('_id', '_email', "_name")
                     .where({_id: objectStoreTaskElement.task_handler._id}).findOne();
                 data.receive_id_type = "open_id"
                 try {
@@ -148,7 +159,7 @@ module.exports = async function (params, context, logger) {
                         open_id: item.user_id
                     }));
                     data.receive_id = user[0].open_id;
-                    content.header.title.content = "【催办消息】"+feishuPeople._name+"有一条" + objectStoreTaskElement.name + "门店任务请尽快处理！";
+                    content.header.title.content = "【任务到期提醒】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + objectStoreTaskElement.name + "门店任务请尽快处理！";
                     data.content = JSON.stringify(content);
                     messageCardSendDatas.push(data);
                 } catch (error) {

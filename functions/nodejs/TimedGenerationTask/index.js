@@ -166,8 +166,7 @@ async function createStoreTaskEntry(finalTaskDefList, task, logger, client) {
     // task 代表任务处理记录
     const createDatas = [];
     try {
-        const filterList = finalTaskDefList.filter(taskDef => taskDef._id === task.task_def._id);
-        const item = filterList[0];
+        const item = finalTaskDefList.find(i => i._id === task.task_def._id);
         let task_plan_time = dayjs(item.datetime_start).add(item.deal_duration, 'day').valueOf();
         //飞书群
         if (item.option_handler_type === "option_01") {
@@ -309,7 +308,6 @@ async function createStoreTaskEntryStart(task, logger, client) {
                 option_type: "option_priority",
                 option_api: task.option_priority
             });
-            logger.info("storeTaskId", storeTaskId, "priority", priority);
             const content = {
                 "config": {
                     "wide_screen_mode": true
