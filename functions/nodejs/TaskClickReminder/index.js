@@ -39,6 +39,7 @@ module.exports = async function (params, context, logger) {
             option_type: "option_priority",
             option_api: item.option_priority
         });
+        let url = await application.globalVar.getVar("task_click_url");
         const content = {
             "config": {
                 "wide_screen_mode": true
@@ -71,6 +72,23 @@ module.exports = async function (params, context, logger) {
                         "content": "距离截至时间还有" + item.deadline_time + "小时",
                         "tag": "plain_text"
                     }
+                },
+                {
+                    "tag": "hr"
+                },
+                {
+                    "tag": "action",
+                    "actions": [
+                        {
+                            "tag": "button",
+                            "text": {
+                                "tag": "plain_text",
+                                "content": "百度一下"
+                            },
+                            "url": url,
+                            "type": "primary"
+                        }
+                    ]
                 }
             ],
             "header": {

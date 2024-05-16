@@ -299,7 +299,7 @@ async function createStoreTaskEntryStart(task, logger, client) {
             receive_id: "", //接收方ID text
             content: "", //消息卡片内容  JSON
         }
-        // 发送消息发片
+        // 发送消息卡片
         // todo: 补充消息卡片内的按钮
         try {
             let name = task.name;
@@ -308,6 +308,7 @@ async function createStoreTaskEntryStart(task, logger, client) {
                 option_type: "option_priority",
                 option_api: task.option_priority
             });
+            let url = await application.globalVar.getVar("task_click_url");
             const content = {
                 "config": {
                     "wide_screen_mode": true
@@ -340,6 +341,23 @@ async function createStoreTaskEntryStart(task, logger, client) {
                             "content": "距离截至时间还有" + task.deadline_time + "小时",
                             "tag": "plain_text"
                         }
+                    },
+                    {
+                        "tag": "hr"
+                    },
+                    {
+                        "tag": "action",
+                        "actions": [
+                            {
+                                "tag": "button",
+                                "text": {
+                                    "tag": "plain_text",
+                                    "content": "百度一下"
+                                },
+                                "url": url,
+                                "type": "primary"
+                            }
+                        ]
                     }
                 ],
                 "header": {
@@ -406,7 +424,7 @@ async function createStoreTaskEntryStart(task, logger, client) {
                         content.header.title.content = "【任务发布】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + task.name + "门店任务请尽快处理！";
                         data.content = JSON.stringify(content);
                     } catch (error) {
-                        logger.error(`组装门店普通任务[${task._id}]发送消息发片失败-->！`, error);
+                        logger.error(`组装门店普通任务[${task._id}]发送消息卡片失败-->！`, error);
                     }
                 }
             }
@@ -414,10 +432,10 @@ async function createStoreTaskEntryStart(task, logger, client) {
             return {code: 0, message: '创建门店普通任务成功', storeTaskId: storeTaskId._id, messageCardSendData: data};
         } catch (error) {
             logger.error("messageCardSendData--->", JSON.stringify(data, null, 2));
-            logger.error(`组装门店普通任务[${task._id}]发送消息发片失败-->`, error);
+            logger.error(`组装门店普通任务[${task._id}]发送消息卡片失败-->`, error);
             return {
                 code: 0,
-                message: `创建门店普通任务成功&组装门店普通任务[${task._id}]发送消息发片失败`,
+                message: `创建门店普通任务成功&组装门店普通任务[${task._id}]发送消息卡片失败`,
                 storeTaskId: storeTaskId._id,
                 messageCardSendData: {}
             };
