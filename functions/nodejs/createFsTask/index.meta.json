@@ -13,12 +13,11 @@
   "frontendSDKInvokable": false,
   "input": [
     {
-      "key": "taskRecord",
-      "type": "Record",
-      "label": "门店普通任务",
+      "key": "storeTaskId",
+      "type": "Text",
+      "label": "门店普通任务ID",
       "required": true,
-      "description": "",
-      "objectApiName": "object_store_task"
+      "description": ""
     }
   ],
   "output": []

@@ -268,7 +268,16 @@ async function createStoreTaskEntry(finalTaskDefList, task, logger, client) {
                 logger.error(`修改任务处理记录[${task._id}]状态为处理中失败-->`, error);
             }
         } else {
-            logger.warn("根据任务定义群组和人员筛选规则查询结果为空")
+            logger.warn("根据任务定义群组和人员筛选规则查询结果为空");
+            try {
+                const updataData = {
+                    _id: task._id,
+                    option_status: "option_03"
+                }
+                await application.data.object("object_task_create_monitor").update(updataData);
+            } catch (error) {
+                logger.error(`修改任务处理记录[${task._id}]状态为失败失败-->`, error);
+            }
         }
         return {code: 0, message: '为任务处理记录创建门店普通任务成功', task_id: task._id};
     } catch (error) {
@@ -338,7 +347,7 @@ async function createStoreTaskEntryStart(task, logger, client) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "距离截至时间还有" + task.deadline_time + "小时",
+                            "content": "距离截至时间还有" + task.deadline_time.toFixed(2) + "小时",
                             "tag": "plain_text"
                         }
                     },

@@ -135,8 +135,8 @@ module.exports = async function (params, context, logger) {
     }
   };
 
-  // 将用户列表按照每个200的长度分成若干个数组
-  const chunks = chunkArray(userList);
+  // 将用户列表按照每个50的长度分成若干个数组
+  const chunks = chunkArray(userList, 50);
   const limitGetUserInfo = createLimiter(getUserInfo);
   const resList = await Promise.all(chunks.map(item => limitGetUserInfo(item)));
   logger.info({ resList: resList.flat() });

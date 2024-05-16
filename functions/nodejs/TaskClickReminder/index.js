@@ -69,7 +69,7 @@ module.exports = async function (params, context, logger) {
                 {
                     "tag": "div",
                     "text": {
-                        "content": "距离截至时间还有" + item.deadline_time + "小时",
+                        "content": "距离截至时间还有" + item.deadline_time.toFixed(2) + "小时",
                         "tag": "plain_text"
                     }
                 },
