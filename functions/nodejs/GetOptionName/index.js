@@ -15,8 +15,8 @@ module.exports = async function (params, context, logger) {
         const storeTaskPriorityDefine = await application.metadata.object(table_name).getField(option_type);
         console.info(storeTaskPriorityDefine)
         let priorityName = storeTaskPriorityDefine.optionList.find(item => item.apiName === option_api).label.find(item => item.language_code === 2052).text;
-        return {code:-1,message:priorityName}
+        return {code: 0,option_name: priorityName}
     }catch (error){
-        return {code:-1,message:"参数有误"}
+        return {code:-1,option_name: "参数有误"}
     }
 }

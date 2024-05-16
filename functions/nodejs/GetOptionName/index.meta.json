@@ -3,34 +3,35 @@
   "apiName": "GetOptionName",
   "label": {
     "zh_CN": "获取全局变量的选项名称",
-    "en_US": ""
+    "en_US": null
   },
   "description": {
-    "zh_CN": "传入全局变量字段API和选项API获取选项名称",
-    "en_US": ""
+    "zh_CN": "根据对象名称，全局变量字段API和选项API获取选项名称",
+    "en_US": null
   },
-  "longTaskMode": false,
+  "isPublicAPI": false,
   "frontendSDKInvokable": false,
+  "longTaskMode": false,
   "input": [
     {
       "key": "option_type",
       "type": "Text",
-      "label": "字段名称",
       "required": true,
+      "label": "字段名称",
       "description": ""
     },
     {
       "key": "option_api",
       "type": "Text",
-      "label": "字段值",
       "required": true,
+      "label": "字段值",
       "description": ""
     },
     {
       "key": "table_name",
       "type": "Text",
-      "label": "对象名",
       "required": true,
+      "label": "对象名",
       "description": ""
     }
   ],

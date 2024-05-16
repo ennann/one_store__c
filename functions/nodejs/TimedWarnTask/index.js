@@ -119,27 +119,41 @@ module.exports = async function (params, context, logger) {
             data.receive_id = feishuChat.chat_id
             messageCardSendDatas.push(data);
         } else {
-            // TODO 判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
-            const feishuPeople = await application.data.object('_user')
-                .select('_id', '_email')
-                .where({_id: objectStoreTaskElement.task_handler._id}).findOne();
-            data.receive_id_type = "open_id"
-            try {
-                const emails = [];
-                emails.push(feishuPeople._email);
-                //获取open_id
-                const res = await client.contact.user.batchGetId({
-                    params: {user_id_type: "open_id"},
-                    data: {emails: emails}
-                });
-                const user = res.data.user_list.map(item => ({
-                    email: item.email,
-                    open_id: item.user_id
-                }));
-                data.receive_id = user[0].open_id;
+            //判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
+            let object_task_def = await application.data.object("object_task_def")
+                .select("_id", "send_channel")
+                .where().findOne();
+            if (object_task_def.send_channel === "option_group") {
+                data.receive_id_type = "chat_id"
+                let object_feishu_chat = await application.data.object("object_feishu_chat")
+                    .select("_id", "chat_id")
+                    .where({department: objectStoreTaskElement.task_handler.department._id}).findOne();
+                data.receive_id = object_feishu_chat.chat_id
                 messageCardSendDatas.push(data);
-            } catch (error) {
-                logger.error(`[${feishuPeople._id}]用户邮箱为null！`, error);
+            } else {
+                const feishuPeople = await application.data.object('_user')
+                    .select('_id', '_email',"_name")
+                    .where({_id: objectStoreTaskElement.task_handler._id}).findOne();
+                data.receive_id_type = "open_id"
+                try {
+                    const emails = [];
+                    emails.push(feishuPeople._email);
+                    //获取open_id
+                    const res = await client.contact.user.batchGetId({
+                        params: {user_id_type: "open_id"},
+                        data: {emails: emails}
+                    });
+                    const user = res.data.user_list.map(item => ({
+                        email: item.email,
+                        open_id: item.user_id
+                    }));
+                    data.receive_id = user[0].open_id;
+                    content.header.title.content = "【催办消息】"+feishuPeople._name+"有一条" + objectStoreTaskElement.name + "门店任务请尽快处理！";
+                    data.content = JSON.stringify(content);
+                    messageCardSendDatas.push(data);
+                } catch (error) {
+                    logger.error(`[${feishuPeople._id}]用户邮箱为null！`, error);
+                }
             }
         }
     }

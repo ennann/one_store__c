@@ -1,7 +1,7 @@
 // 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
 // 如安装 linq 包后就可以引入并使用这个包
 // const linq = require("linq");
-const { newLarkClient } = require('../utils');
+const { newLarkClient, createLimiter, chunkArray } = require('../utils');
 
 /**
  * @param {Params}  params     自定义参数
@@ -34,10 +34,10 @@ module.exports = async function (params, context, logger) {
       const userRecords = [];
       await application.data
         .object('_user')
-        .select('_id', '_email')
+        .select('_id', '_email', "_phoneNumber")
         .where(query)
         .findStream(async records => {
-          userRecords.push(...records.map(item => ({ _id: item._id, email: item._email })));
+          userRecords.push(...records.map(item => ({ _id: item._id, email: item._email, mobile: item._phoneNumber?.number })));
         });
       return userRecords
     } catch (error) {
@@ -106,24 +106,39 @@ module.exports = async function (params, context, logger) {
   }
 
   const client = await newLarkClient({ userId: context.user._id }, logger);
-  try {
-    const res = await client.contact.user.batchGetId({
-      params: { user_id_type: "open_id" },
-      data: { emails: userList.map(i => i.email) }
-    })
-    logger.info({ res });
-    if (res.code !== 0) {
-      throw new Error("通过人员筛选条件获取人员失败");
+
+  // 获取人员信息
+  const getUserInfo = async (list) => {
+    try {
+      const res = await client.contact.user.batchGetId({
+        params: { user_id_type: "open_id" },
+        data: {
+          emails: list.filter(i => !!i.email).map(i => i.email),
+          mobiles: list.filter(i => !!i.mobile).map(i => i.mobile)
+        }
+      })
+      logger.info({ res });
+      if (res.code !== 0) {
+        logger.error("通过人员筛选条件获取人员失败");
+        return [];
+      }
+      return res.data.user_list
+        .filter(ele => !!ele.user_id)
+        .map(item => ({
+          email: item.email,
+          mobile: item.mobile,
+          open_id: item.user_id,
+          _id: list.find(i => i.email === item.email || i.mobile === item.mobile)._id
+        }))
+    } catch (error) {
+      logger.error("通过人员筛选条件获取人员失败");
     }
-    return res.data.user_list
-      .filter(ele => !!ele.user_id)
-      .map(item => ({
-        email: item.email,
-        open_id: item.user_id,
-        _id: userList.find(i => i.email === item.email)._id
-      }))
-  } catch (error) {
-    logger.error("通过人员筛选条件获取人员失败");
-    throw new Error("通过人员筛选条件获取人员失败");
-  }
+  };
+
+  // 将用户列表按照每个200的长度分成若干个数组
+  const chunks = chunkArray(userList);
+  const limitGetUserInfo = createLimiter(getUserInfo);
+  const resList = await Promise.all(chunks.map(item => limitGetUserInfo(item)));
+  logger.info({ resList: resList.flat() });
+  return resList.flat();
 }

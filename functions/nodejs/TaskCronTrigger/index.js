@@ -128,18 +128,24 @@ module.exports = async function (params, context, logger) {
 
     // return valuedTaskDefineList;
 
-    // 创建一个函数，用于调用任务生成函数，最后使用 Promise.all 来并发执行 valuedTaskDefineList 内的任务定义
-    const invokeTaskGenerateFunction = async taskDefine => {
-        // 调用任务生成函数
-        return faas.function('TimedGenerationTask').invoke(taskDefine);
-    };
+    //----------------------------弃用----------------------start
+    // // 创建一个函数，用于调用任务生成函数，最后使用 Promise.all 来并发执行 valuedTaskDefineList 内的任务定义
+    // const invokeTaskGenerateFunction = async taskDefine => {
+    //     // 调用任务生成函数
+    //     return faas.function('TimedGenerationTask').invoke(taskDefine);
+    // };
+    //
+    // // 并发执行任务生成函数
+    // const taskGenerationResult = await Promise.all(valuedTaskDefineList.map(invokeTaskGenerateFunction));
+    // logger.info('任务生成函数执行结果->', taskGenerationResult);
+    //
+    // const successList = taskGenerationResult.filter(item => item.code === 0);
+    // const failList = taskGenerationResult.filter(item => item.code !== 0);
+    //----------------------------弃用-----------------------end
 
-    // 并发执行任务生成函数
-    const taskGenerationResult = await Promise.all(valuedTaskDefineList.map(invokeTaskGenerateFunction));
-    logger.info('任务生成函数执行结果->', taskGenerationResult);
-
-    const successList = taskGenerationResult.filter(item => item.code === 0);
-    const failList = taskGenerationResult.filter(item => item.code !== 0);
+    const taskGenerationResult = await faas.function('TimedGenerationTask').invoke({object_task_defs:valuedTaskDefineList});
+    const successList = taskGenerationResult.data.successfulTasks;
+    const failList = taskGenerationResult.data.failedTasks;
 
     return {
         message: '任务触发器函数执行成功',

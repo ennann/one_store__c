@@ -19,19 +19,20 @@ module.exports = async function (params, context, logger) {
         logger.warn("未传入任务处理记录")
         return {code: false, message: "未传入任务处理记录"}
     }
-    let client = await newLarkClient({ userId: context.user._id }, logger);
+    let client = await newLarkClient({userId: context.user._id}, logger);
     //获取普通任务
-    const res = await application.data.object("object_store_task")
-        .select("name", "option_priority", "source_department", "task_create_time", "deadline_time","task_handler","task_chat")
-        .where({task_monitor: {_id: object_task_create_monitor._id},task_status:application.operator.in('option_pending', 'option_transferred', 'option_rollback')})
+    const object_store_tasks = await application.data.object("object_store_task")
+        .select("name", "option_priority", "source_department", "task_create_time", "deadline_time", "task_handler", "task_chat")
+        .where({
+            task_monitor: {_id: object_task_create_monitor._id},
+            task_status: application.operator.in('option_pending', 'option_transferred', 'option_rollback')
+        })
         .find();
     //待发送飞书消息列表
     let messageCardSendDatas = []
     let taskCount = 0;
     let userCount = 0;
-    for (let i = 0; i < res.length; i++) {
-        const item = res[i];
-        logger.info(i+"---------item->",JSON.stringify(item,null,2));
+    for (const item of object_store_tasks) {
         const content = {
             "config": {
                 "wide_screen_mode": true
@@ -40,7 +41,11 @@ module.exports = async function (params, context, logger) {
                 {
                     "tag": "div",
                     "text": {
-                        "content": "任务优先级：" + await faas.function("GetOptionName").invoke({table_name:"object_store_task",option_type:"option_priority",option_api:item.option_priority}),
+                        "content": "任务优先级：" + await faas.function("GetOptionName").invoke({
+                            table_name: "object_store_task",
+                            option_type: "option_priority",
+                            option_api: item.option_priority
+                        }),
                         "tag": "plain_text"
                     }
                 },
@@ -69,7 +74,7 @@ module.exports = async function (params, context, logger) {
             "header": {
                 "template": "turquoise",
                 "title": {
-                    "content": "【催办消息】有一条"+item.name+"门店任务请尽快处理！",
+                    "content": "【催办消息】有一条" + item.name + "门店任务请尽快处理！",
                     "tag": "plain_text"
                 }
             }
@@ -91,32 +96,47 @@ module.exports = async function (params, context, logger) {
             messageCardSendDatas.push(data);
             taskCount++;
         } else {
-            // TODO 判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
             const feishuPeople = await application.data.object('_user')
-                .select('_id', '_email')
+                .select('_id', '_email','_department')
                 .where({_id: item.task_handler._id}).findOne();
-            data.receive_id_type = "open_id"
-            try {
-                const emails = [];
-                emails.push(feishuPeople._email);
-                //获取open_id
-                const res = await client.contact.user.batchGetId({
-                    params: {user_id_type: "open_id"},
-                    data: {emails: emails}
-                });
-                const user = res.data.user_list.map(item => ({
-                    email: item.email,
-                    open_id: item.user_id
-                }));
-                data.receive_id = user[0].open_id;
+            //判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
+            let object_task_def = await application.data.object("object_task_def")
+                .select("_id", "send_channel")
+                .where().findOne();
+            if (object_task_def.send_channel === "option_group") {
+                data.receive_id_type = "chat_id"
+                let object_feishu_chat = await application.data.object("object_feishu_chat")
+                    .select("_id", "chat_id")
+                    .where({department: feishuPeople._department._id}).findOne();
+                data.receive_id = object_feishu_chat.chat_id
                 messageCardSendDatas.push(data);
                 userCount++;
-            } catch (error) {
-                logger.error(`[${feishuPeople._id}]用户邮箱为null！`, error);
+            } else {
+                data.receive_id_type = "open_id"
+                try {
+                    const emails = [];
+                    emails.push(feishuPeople._email);
+                    //获取open_id
+                    const res = await client.contact.user.batchGetId({
+                        params: {user_id_type: "open_id"},
+                        data: {emails: emails}
+                    });
+                    const user = res.data.user_list.map(item => ({
+                        email: item.email,
+                        open_id: item.user_id
+                    }));
+                    data.receive_id = user[0].open_id;
+                    content.header.title.content = "【催办消息】"+item.task_handler._name+"有一条" + item.name + "门店任务请尽快处理！";
+                    data.content = JSON.stringify(content);
+                    messageCardSendDatas.push(data);
+                    userCount++;
+                } catch (error) {
+                    logger.error(`[${feishuPeople._id}]用户邮箱为null！`, error);
+                }
             }
         }
     }
-    logger.info("messageCardSendDatas->",messageCardSendDatas);
+    logger.info("messageCardSendDatas->", messageCardSendDatas);
     //创建限流器
     const limitedsendFeishuMessage = createLimiter(sendFeishuMessage);
     //发送飞书卡片消息

@@ -1,7 +1,8 @@
 // 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
 // 如安装 linq 包后就可以引入并使用这个包
 // const linq = require("linq");
-const { newLarkClient } = require('../utils');
+const dayjs = require("dayjs");
+const { newLarkClient, createLimiter } = require('../utils');
 /**
  * @param {Params}  params     自定义参数
  * @param {Context} context    上下文参数，可通过此参数下钻获取上下文变量信息等
@@ -21,27 +22,13 @@ module.exports = async function (params, context, logger) {
   const KEY = message_def._id;
   const redisValue = await baas.redis.get(KEY);
   logger.info({ redisValue });
-  if (redisValue) return;
-  const redisRes = await baas.redis.set(KEY, new Date().getTime());
-  logger.info({ redisRes });
+  // if (redisValue) {
+  //   logger.info("已存在执行中发送消息任务");
+  //   return;
+  // };
 
   let receive_id_type = message_def.send_channel === "option_group" ? "chat_id" : "open_id";
   let sendIds = []
-
-  // 消息渠道为飞书群
-  if (message_def.send_channel === "option_group") {
-    const chatRecordList = await faas.function('DeployChatRange')
-      .invoke({ deploy_rule: message_def.chat_rule });
-    logger.info({ chatRecordList });
-    sendIds = chatRecordList.map(i => i.chat_id);
-    logger.info({ sendIds });
-  }
-
-  // 消息渠道为个人
-  if (message_def.send_channel === "option_user") {
-    const userList = await faas.function('DeployMemberRange').invoke({ user_rule: message_def.user_rule });
-    sendIds = userList.map(i => i.open_id);
-  }
 
   let errorNum = 0;
   const MAX_ERROR_NUM = 5; // 最大失败次数
@@ -72,12 +59,9 @@ module.exports = async function (params, context, logger) {
 
   // 获取多张图片image_key
   const getImageKeys = async (images) => {
-    const keys = [];
-    for (const { token } of images) {
-      const imageKey = await getImgKey(token);
-      keys.push(imageKey);
-    }
-    return keys;
+    const limitUploadImg = createLimiter(getImgKey);
+    const imgUploadList = await Promise.all(images.map(item => limitUploadImg(item.token)));
+    return imgUploadList.filter(imgKey => !!imgKey);
   };
 
   // 转换富文本
@@ -143,6 +127,10 @@ module.exports = async function (params, context, logger) {
 
   // 图片类型根据图片数量返回消息数据
   const getImgContent = async () => {
+    if (!message_def.images || message_def.images.length === 0) {
+      logger.error("消息定义没有图片");
+      return [];
+    }
     const imageKeys = await getImageKeys(message_def.images);
     if (imageKeys.length === 1) {
       return {
@@ -212,7 +200,26 @@ module.exports = async function (params, context, logger) {
     };
   }
 
-  // 获取消息内容
+  // 新增发送记录
+  const createSendRecord = async () => {
+    try {
+      const times = new Date().getTime();
+      const batch_no = message_def._id + '-' + times;
+      const createData = {
+        batch_no,
+        option_status: "option_01",
+        message_send_def: { _id: message_def._id },
+        send_start_datetime: dayjs().valueOf(),
+      };
+      const res = await application.data.object('object_message_send').create(createData);
+      logger.info('创建发送日志成功', res);
+      return res._id;
+    } catch (error) {
+      logger.error('创建发送日志失败', error);
+    }
+  };
+
+  // 获取消息内容;
   const res = await getContent(message_def.option_message_type);
 
   // 发送消息
@@ -224,8 +231,9 @@ module.exports = async function (params, context, logger) {
     };
     logger.info({ paramsData });
     try {
-      await faas.function('MessageCardSend').invoke({ ...paramsData });
+      const res = await faas.function('MessageCardSend').invoke({ ...paramsData });
       errorNum = 0;
+      return res;
     } catch (error) {
       if (errorNum >= MAX_ERROR_NUM) {
         errorNum = 0;
@@ -237,11 +245,88 @@ module.exports = async function (params, context, logger) {
     }
   };
 
-  // 根据id数组循环遍历
-  if (sendIds.length > 0) {
-    for (const id of sendIds) {
-      await sendMessage(id);
+  try {
+    if (!message_def.send_channel) {
+      logger.error("没有选择飞书发送渠道");
+      return;
     }
+
+    // 消息渠道为飞书群
+    if (message_def.send_channel === "option_group") {
+      if (!message_def.chat_rule) {
+        logger.error("缺少群组筛选规则");
+        return;
+      }
+      const chatRecordList = await faas.function('DeployChatRange')
+        .invoke({ deploy_rule: message_def.chat_rule });
+      logger.info({ chatRecordList });
+      sendIds = chatRecordList.map(i => i.chat_id);
+      logger.info({ sendIds });
+    }
+
+    // 消息渠道为个人
+    if (message_def.send_channel === "option_user") {
+      if (!message_def.send_channel) {
+        logger.error("缺少人员筛选规则");
+        return;
+      }
+      const userList = await faas.function('DeployMemberRange').invoke({ user_rule: message_def.user_rule });
+      sendIds = userList.map(i => i.open_id);
+    }
+
+    if (sendIds.length > 0) {
+      // 创建消息发送记录
+      const recordId = await createSendRecord();
+      // 缓存执行记录
+      await baas.redis.set(KEY, new Date().getTime());
+      // 限流器
+      const limitSendMessage = createLimiter(sendMessage);
+      // 统一调用发送
+      const sendMessageResult = await Promise.all(sendIds.map((id) => limitSendMessage(id)));
+      logger.info({ sendMessageResult });
+      const successRecords = sendMessageResult.filter(result => result.code === 0);
+      const failRecords = sendMessageResult.filter(result => result.code !== 0);
+      logger.info(`消息总数：${sendIds.length}`);
+      logger.info(`成功数量：${successRecords.length}`);
+      logger.info(`失败数量：${failRecords.length}`);
+
+      // 获取发送状态，option_02-发送完成，option_049fb10544f-部分成功，option_03-发送失败
+      let option_status;
+      if (successRecords.length === sendIds.length) {
+        option_status = "option_02";
+      } else if (failRecords.length === sendIds.length) {
+        option_status = "option_03";
+      } else {
+        option_status = "option_049fb10544f";
+      }
+
+      // 更新发送记录
+      if (recordId) {
+        try {
+          const updataData = {
+            _id: recordId,
+            option_status,
+            send_count: sendIds.length,
+            success_count: successRecords.length,
+            fail_count: failRecords.length,
+            send_end_datetime: dayjs().valueOf(),
+          };
+          logger.info({ updataData });
+          await application.data.object("object_message_send").update(updataData);
+          // 异步更新消息发送日志
+          const res = await baas.tasks.createAsyncTask(
+            "UpdateMessageSendLog",
+            { sendMessageResult, send_record: { _id: recordId }, message_type: message_def.option_message_type }
+          );
+          logger.info("执行异步任务", { res });
+          logger.info("更新日志记录成功");
+        } catch (error) {
+          logger.info("更新日志记录失败", error);
+        }
+      }
+    }
+  } catch (error) {
+    logger.error("生成并发送消息内容失败", error);
+    await baas.redis.set(KEY, null);  // redis置空
   }
-  await baas.redis.set(KEY, null);
 };

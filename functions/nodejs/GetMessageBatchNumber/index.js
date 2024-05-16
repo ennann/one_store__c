@@ -11,22 +11,34 @@
  */
 module.exports = async function (params, context, logger) {
     // 日志功能
-    logger.info(`${new Date()} 函数开始执行`);
+    logger.info(`${new Date()} 获取消息编号函数开始执行`);
     const response = {
-        code:0,
-        batch_no:"",
-        message:"获取成功"
+        code: 0,
+        batch_no: "",
+        message: "获取成功"
     }
     // 在这里补充业务代码
     const {object_chat_message_def} = params;
     logger.info('消息定义', JSON.stringify(object_chat_message_def, null, 2));
-    if (!object_chat_message_def){
-        response.code = -1 ;
+    if (!object_chat_message_def) {
+        response.code = -1;
         response.message = "缺少必要参数：消息定义数据";
+        return response;
     }
-    let oldVar = await application.data.object('object_message_send').select('_id', 'batch_no').where({ 'message_send_def': object_chat_message_def }).find();
-    const length = oldVar.length + 1 ;
-    const newBatchNo =  1000000 + length
-    response.batch_no = newBatchNo.toString().substring(1);
-    return response;
+    try {
+        const existingTasks = await application.data.object('object_message_send').select('_id', 'batch_no')
+            .where({'message_send_def': {_id: object_chat_message_def._id}}).find();
+        let object_chat_message_def_query = await application.data.object('object_chat_message_def')
+            .select('_id', 'number')
+            .where({_id: object_chat_message_def._id})
+            .findOne();
+        const newBatchNo =  + `${(existingTasks.length + 1).toString().padStart(6, '0')}`;
+        response.batch_no = object_chat_message_def_query.number + '-' + newBatchNo;
+    } catch (error) {
+        logger.error(`数据库操作失败: ${error}`);
+        response.code = -1;
+        response.message = '内部服务器错误';
+    }
+    response.code = -1;
+    response.message = "缺少必要参数：消息定义数据";
 }

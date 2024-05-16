@@ -17,7 +17,7 @@ module.exports = async function (params, context, logger) {
     };
 
     // Extract task definition from params
-    const { object_task_def } = params;
+    const {object_task_def} = params;
 
     // Log task definition
     logger.info(`任务定义: ${JSON.stringify(object_task_def, null, 2)}`);
@@ -30,21 +30,20 @@ module.exports = async function (params, context, logger) {
     }
 
     try {
-        // Querying the database for existing task information
-        const existingTasks = await application.data.object('object_task_create_monitor')
+        const object_task_create_monitors = await application.data.object('object_task_create_monitor')
             .select('_id', 'batch_no')
-            .where({ 'task_def': object_task_def })
+            .where({task_def: {_id: object_task_def._id}})
             .find();
-
-        // Generating new batch number based on existing tasks count
-        const newBatchNo = `1${(existingTasks.length + 1).toString().padStart(6, '0')}`;
-        response.batch_no = newBatchNo;
+        let object_task_def_query = await application.data.object('object_task_def')
+            .select('_id', 'task_number')
+            .where({_id: object_task_def._id})
+            .findOne();
+        const newBatchNo = `${(object_task_create_monitors.length + 1).toString().padStart(6, '0')}`;
+        response.batch_no = object_task_def_query.task_number + '-' + newBatchNo;
     } catch (error) {
-        // Handle potential errors during database operations
         logger.error(`数据库操作失败: ${error}`);
         response.code = -1;
         response.message = '内部服务器错误';
     }
-
     return response;
 };

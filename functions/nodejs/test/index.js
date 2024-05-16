@@ -9,147 +9,167 @@ const _ = application.operator;
  * @return 函数的返回数据
  */
 module.exports = async function (params, context, logger) {
-    // 日志功能
-    logger.info(`${new Date()} 消息触发器函数开始执行`);
+  // 日志功能
+  logger.info(`${new Date()} 消息触发器函数开始执行`);
 
-    const currentDate = dayjs().format('YYYY-MM-DD');
-    const currentTime = dayjs().valueOf(); // 当前时间
-    const timeBuffer = 1000 * 60 * 5; // 5 minutes buffer
-    logger.info('当前时间->', currentDate, currentTime, dayjs(currentTime).format('YYYY-MM-DD HH:mm:ss'));
+  let task = await application.data.object("object_store_task").select('task_handler', 'task_handler_department').where({ _id: 1799010105175067 }).findOne()
+  logger.info(task)
 
-    // 查询所有的消息定义数据
-    const messageDefineRecords = await application.data
-        .object('object_chat_message_def')
-        .select(
-            '_id',
-            'title',
-            'option_method',
-            'option_time_cycle', // 天、周、月、季度、年
-            'repetition_rate', // 重复频次
-            'datetime_start', // 重复任务开始时间
-            'datetime_end', // 重复任务结束时间
-            'boolean_public_now',
-            'datetime_publish', // 发布时间
-            'option_status', // 等于 option_enable
-        )
-        .where(
-            _.or(
-                _.and({
-                    option_status: 'option_enable',
-                    option_method: 'option_cycle',
-                    datetime_start: _.lte(currentTime),
-                    datetime_end: _.gte(currentTime),
-                }), // 周期消息的条件
-                _.and({
-                    option_status: 'option_enable',
-                    option_method: 'option_once',
-                    boolean_public_now: false,
-                    datetime_publish: _.lte(currentTime + timeBuffer), // 5分钟内的消息
-                    datetime_publish: _.gte(currentTime - timeBuffer),
-                }), // 一次性消息的条件
-            ),
-        )
-        .find();
 
-    logger.info('查询到的消息定义数量->', messageDefineRecords.length);
-    logger.info(messageDefineRecords);
+  let object_feishu_chat = await application.data.object("object_feishu_chat")
+    .select("_id", "chat_id")
+    .where({ department: task.task_handler_department._id }).findOne();
+  logger.info(object_feishu_chat)
 
-    const unitMapping = {
-        option_day: 'day',
-        option_week: 'week',
-        option_month: 'month',
-        option_quarter: { unit: 'month', factor: 3 },
-        option_half_year: { unit: 'month', factor: 6 },
-        option_year: 'year',
-    };
+  return
 
-    let valuedMessageDefineList = [];
 
-    const calculateTriggerDates = (startDate, endDate, repetitionRate, unit) => {
-        const triggerDates = [];
-        let nextTriggerDate = startDate;
+  const storeTaskPriorityDefine = await application.metadata.object('object_store_task').getField('option_priority');
+  console.info(storeTaskPriorityDefine)
+  let priorityName = storeTaskPriorityDefine.optionList.find(item => item.apiName === "option_01").label.find(item => item.language_code === 2052).text;
+  console.info(priorityName)
+  return
 
-        while (nextTriggerDate.isBefore(endDate) || nextTriggerDate.isSame(endDate)) {
-            triggerDates.push(nextTriggerDate.format('YYYY-MM-DD'));
-            nextTriggerDate = nextTriggerDate.add(repetitionRate, unit);
-        }
 
-        return triggerDates;
-    };
 
-    const isTriggerTime = (currentTime, triggerTime, timeBuffer) => {
-        return currentTime >= triggerTime - timeBuffer && currentTime <= triggerTime + timeBuffer;
-    };
+  const currentDate = dayjs().format('YYYY-MM-DD');
+  const currentTime = dayjs().valueOf(); // 当前时间
+  const timeBuffer = 1000 * 60 * 5; // 5 minutes buffer
+  logger.info('当前时间->', currentDate, currentTime, dayjs(currentTime).format('YYYY-MM-DD HH:mm:ss'));
 
-    // 循环所有 messageDefineRecords
-    for (const message of messageDefineRecords) {
-        if (message.option_method === 'option_once') {
-            valuedMessageDefineList.push(message);
-            logger.info(`一次性消息: ${message.title}`);
-            continue;
-        }
+  // 查询所有的消息定义数据
+  const messageDefineRecords = await application.data
+    .object('object_chat_message_def')
+    .select(
+      '_id',
+      'title',
+      'option_method',
+      'option_time_cycle', // 天、周、月、季度、年
+      'repetition_rate', // 重复频次
+      'datetime_start', // 重复任务开始时间
+      'datetime_end', // 重复任务结束时间
+      'boolean_public_now',
+      'datetime_publish', // 发布时间
+      'option_status', // 等于 option_enable
+    )
+    .where(
+      _.or(
+        _.and({
+          option_status: 'option_enable',
+          option_method: 'option_cycle',
+          datetime_start: _.lte(currentTime),
+          datetime_end: _.gte(currentTime),
+        }), // 周期消息的条件
+        _.and({
+          option_status: 'option_enable',
+          option_method: 'option_once',
+          boolean_public_now: false,
+          datetime_publish: _.lte(currentTime + timeBuffer), // 5分钟内的消息
+          datetime_publish: _.gte(currentTime - timeBuffer),
+        }), // 一次性消息的条件
+      ),
+    )
+    .find();
 
-        if (message.option_method === 'option_cycle') {
-            const { datetime_start: startTime, datetime_end: endTime, option_time_cycle: cycleType, repetition_rate: repetitionRate } = message;
-            const startDate = dayjs(startTime);
-            const endDate = dayjs(endTime);
-            let unit,
-                factor = 1;
+  logger.info('查询到的消息定义数量->', messageDefineRecords.length);
+  logger.info(messageDefineRecords);
 
-            if (unitMapping[cycleType]) {
-                if (typeof unitMapping[cycleType] === 'object') {
-                    unit = unitMapping[cycleType].unit;
-                    factor = unitMapping[cycleType].factor;
-                } else {
-                    unit = unitMapping[cycleType];
-                }
-            } else {
-                logger.warn(`未知的周期类型: ${cycleType}`);
-                continue;
-            }
+  const unitMapping = {
+    option_day: 'day',
+    option_week: 'week',
+    option_month: 'month',
+    option_quarter: { unit: 'month', factor: 3 },
+    option_half_year: { unit: 'month', factor: 6 },
+    option_year: 'year',
+  };
 
-            const triggerDates = calculateTriggerDates(startDate, endDate, repetitionRate * factor, unit);
+  let valuedMessageDefineList = [];
 
-            logger.info(`周期消息: ${message.title} 触发日期数组: ${triggerDates.join(', ')}`);
+  const calculateTriggerDates = (startDate, endDate, repetitionRate, unit) => {
+    const triggerDates = [];
+    let nextTriggerDate = startDate;
 
-            if (triggerDates.includes(currentDate)) {
-                const triggerTime = dayjs(`${currentDate} ${startDate.format('HH:mm:ss')}`).valueOf();
-
-                if (isTriggerTime(currentTime, triggerTime, timeBuffer)) {
-                    valuedMessageDefineList.push(message);
-                    logger.info(`周期消息: ${message.title} 触发时间: ${triggerTime}, ${dayjs(triggerTime).format('YYYY-MM-DD HH:mm:ss')}`);
-                }
-            }
-        }
+    while (nextTriggerDate.isBefore(endDate) || nextTriggerDate.isSame(endDate)) {
+      triggerDates.push(nextTriggerDate.format('YYYY-MM-DD'));
+      nextTriggerDate = nextTriggerDate.add(repetitionRate, unit);
     }
 
-    logger.info('需要触发的消息定义数量->', valuedMessageDefineList.length);
+    return triggerDates;
+  };
 
-    // 如果为空数组，直接返回
-    if (valuedMessageDefineList.length === 0) {
-        return {
-            message: '没有需要触发的消息定义',
-        };
+  const isTriggerTime = (currentTime, triggerTime, timeBuffer) => {
+    return currentTime >= triggerTime - timeBuffer && currentTime <= triggerTime + timeBuffer;
+  };
+
+  // 循环所有 messageDefineRecords
+  for (const message of messageDefineRecords) {
+    if (message.option_method === 'option_once') {
+      valuedMessageDefineList.push(message);
+      logger.info(`一次性消息: ${message.title}`);
+      continue;
     }
 
-    return valuedMessageDefineList;
+    if (message.option_method === 'option_cycle') {
+      const { datetime_start: startTime, datetime_end: endTime, option_time_cycle: cycleType, repetition_rate: repetitionRate } = message;
+      const startDate = dayjs(startTime);
+      const endDate = dayjs(endTime);
+      let unit,
+        factor = 1;
 
-    // 创建一个函数，用于调用消息生成函数，最后使用 Promise.all 来并发执行 valuedMessageDefineList 内的消息定义
-    const invokeMessageGenerateFunction = async messageDefine => {
-        // 调用消息生成函数
-        return faas.function('TimedGenerationMessage').invoke(messageDefine);
-    };
+      if (unitMapping[cycleType]) {
+        if (typeof unitMapping[cycleType] === 'object') {
+          unit = unitMapping[cycleType].unit;
+          factor = unitMapping[cycleType].factor;
+        } else {
+          unit = unitMapping[cycleType];
+        }
+      } else {
+        logger.warn(`未知的周期类型: ${cycleType}`);
+        continue;
+      }
 
-    // 并发执行消息生成函数
-    const messageGenerationResult = await Promise.all(valuedMessageDefineList.map(invokeMessageGenerateFunction));
-    logger.info('消息生成函数执行结果->', messageGenerationResult);
+      const triggerDates = calculateTriggerDates(startDate, endDate, repetitionRate * factor, unit);
 
-    const successList = messageGenerationResult.filter(item => item.code === 0);
-    const failList = messageGenerationResult.filter(item => item.code !== 0);
+      logger.info(`周期消息: ${message.title} 触发日期数组: ${triggerDates.join(', ')}`);
 
+      if (triggerDates.includes(currentDate)) {
+        const triggerTime = dayjs(`${currentDate} ${startDate.format('HH:mm:ss')}`).valueOf();
+
+        if (isTriggerTime(currentTime, triggerTime, timeBuffer)) {
+          valuedMessageDefineList.push(message);
+          logger.info(`周期消息: ${message.title} 触发时间: ${triggerTime}, ${dayjs(triggerTime).format('YYYY-MM-DD HH:mm:ss')}`);
+        }
+      }
+    }
+  }
+
+  logger.info('需要触发的消息定义数量->', valuedMessageDefineList.length);
+
+  // 如果为空数组，直接返回
+  if (valuedMessageDefineList.length === 0) {
     return {
-        message: '消息触发器函数执行成功',
-        successList,
-        failList,
+      message: '没有需要触发的消息定义',
     };
+  }
+
+  return valuedMessageDefineList;
+
+  // 创建一个函数，用于调用消息生成函数，最后使用 Promise.all 来并发执行 valuedMessageDefineList 内的消息定义
+  const invokeMessageGenerateFunction = async messageDefine => {
+    // 调用消息生成函数
+    return faas.function('TimedGenerationMessage').invoke(messageDefine);
+  };
+
+  // 并发执行消息生成函数
+  const messageGenerationResult = await Promise.all(valuedMessageDefineList.map(invokeMessageGenerateFunction));
+  logger.info('消息生成函数执行结果->', messageGenerationResult);
+
+  const successList = messageGenerationResult.filter(item => item.code === 0);
+  const failList = messageGenerationResult.filter(item => item.code !== 0);
+
+  return {
+    message: '消息触发器函数执行成功',
+    successList,
+    failList,
+  };
 };

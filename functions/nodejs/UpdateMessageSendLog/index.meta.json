@@ -1,0 +1,39 @@
+{
+  "apiID": "one_store__c__function_aadgiwwhl6mhy",
+  "apiName": "UpdateMessageSendLog",
+  "label": {
+    "zh_CN": "更新消息发送日志",
+    "en_US": ""
+  },
+  "description": {
+    "zh_CN": "自定义函数",
+    "en_US": "Custom Function"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "sendMessageResult",
+      "type": "JSON",
+      "label": "消息发送结果",
+      "required": true,
+      "description": ""
+    },
+    {
+      "key": "send_record",
+      "type": "Record",
+      "label": "消息发送记录",
+      "required": true,
+      "description": "",
+      "objectApiName": "object_message_send"
+    },
+    {
+      "key": "message_type",
+      "type": "Text",
+      "label": "消息类型",
+      "required": true,
+      "description": ""
+    }
+  ],
+  "output": []
+}
