@@ -318,6 +318,7 @@ async function createStoreTaskEntryStart(task, logger, client) {
                 option_api: task.option_priority
             });
             let url = await application.globalVar.getVar("task_click_url");
+            const hourDiff = Math.abs(Date(task.task_plan_time) - new Date(dayjs().valueOf())) / 36e5;
             const content = {
                 "config": {
                     "wide_screen_mode": true
@@ -347,7 +348,7 @@ async function createStoreTaskEntryStart(task, logger, client) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "距离截至时间还有" + Number.parseFloat(task.deadline_time).toFixed(2) + "小时",
+                            "content": "距离截至时间还有" + hourDiff.toFixed(2) + "小时",
                             "tag": "plain_text"
                         }
                     },

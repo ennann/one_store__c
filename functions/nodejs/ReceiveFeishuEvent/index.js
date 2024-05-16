@@ -127,18 +127,20 @@ function generateCardButtonUrl(context, chat_id, group_id) {
     const SCOPE = 'im:chat';
     const STATE = `setgroupadmin_user`;
 
-    let APPID = '';
     let BASE_URL = '';
 
     if (context.tenant.type === 4) {
         // 开发环境
-        APPID = 'cli_a69253f101b1500b';
+        // APPID = 'cli_a6b23a7a2f39d00b';
         BASE_URL = 'https%3A%2F%2Ffeishu-dev29.aedev.feishuapp.cn%2Fae%2Fapps%2Fone_store__c%2Faadgdtfskbqhi';
     } else {
         // 线上环境
-        APPID = 'cli_a69e4611e1f8d00b';
+        // APPID = 'cli_a6b23873d463100b';
         BASE_URL = 'https%3A%2F%2Ffeishu.feishuapp.cn%2Fae%2Fapps%2Fone_store__c%2Faadgdtfskbqhi';
     }
+
+    const { appId: APPID } = await application.integration.getDefaultTenantAccessToken();    
+
 
     const REDIRECT_URI = `${BASE_URL}%3Fparams_var_RDE3AgWC%3D${chat_id}%26params_var_QrP6EhWe%3D${group_id}`;
     // %3Fparams_var_RDE3AgWC%3Doc_34e76ae070db2034746777a762f86439%26params_var_QrP6EhWe%3D1796560404246715
