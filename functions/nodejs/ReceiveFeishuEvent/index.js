@@ -1,7 +1,5 @@
-// 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
-// 如安装 linq 包后就可以引入并使用这个包
-// const linq = require("linq");
-const { newLarkClient, getUserIdByEmails } = require('../utils');
+const { newLarkClient } = require('../utils');
+
 
 /**
  * @param {Params}  params     自定义参数
@@ -53,7 +51,7 @@ module.exports = async function (params, context, logger) {
             }
             logger.info(group_record);
 
-            const button_url = generateCardButtonUrl(context, chat_id, group_record._id);
+            const button_url = await generateCardButtonUrl(context, chat_id, group_record._id);
 
             // 消息卡片的发送必须是 stringify 之后的数据
             const card_message =
@@ -123,23 +121,20 @@ module.exports = async function (params, context, logger) {
  * @param {*} chat_id
  * @returns
  */
-function generateCardButtonUrl(context, chat_id, group_id) {
+async function generateCardButtonUrl(context, chat_id, group_id) {
     const SCOPE = 'im:chat';
     const STATE = `setgroupadmin_user`;
+    const { appId: APPID } = await application.integration.getDefaultTenantAccessToken();
 
     let BASE_URL = '';
 
     if (context.tenant.type === 4) {
         // 开发环境
-        // APPID = 'cli_a6b23a7a2f39d00b';
-        BASE_URL = 'https%3A%2F%2Ffeishu-dev29.aedev.feishuapp.cn%2Fae%2Fapps%2Fone_store__c%2Faadgdtfskbqhi';
+        BASE_URL = 'https%3A%2F%2Fet6su6w956-dev29.aedev.feishuapp.cn%2Fae%2Fapps%2Fone_store__c%2Faadgdtfskbqhi';
     } else {
         // 线上环境
-        // APPID = 'cli_a6b23873d463100b';
-        BASE_URL = 'https%3A%2F%2Ffeishu.feishuapp.cn%2Fae%2Fapps%2Fone_store__c%2Faadgdtfskbqhi';
+        BASE_URL = 'https%3A%2F%2Fet6su6w956.feishuapp.cn%2Fae%2Fapps%2Fone_store__c%2Faadgdtfskbqhi';
     }
-
-    const { appId: APPID } = await application.integration.getDefaultTenantAccessToken();    
 
 
     const REDIRECT_URI = `${BASE_URL}%3Fparams_var_RDE3AgWC%3D${chat_id}%26params_var_QrP6EhWe%3D${group_id}`;

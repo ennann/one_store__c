@@ -14,17 +14,18 @@ module.exports = async function (params, context, logger) {
   // 日志功能
   logger.info(`更新消息发送日志 函数开始执行`, params);
 
-  const { send_record, sendMessageResult, message_type } = params;
+  const { send_record, sendMessageResult, message_type, receive_id_type } = params;
 
   const batchCreateLogData = async (records) => {
     try {
       const recordList = records.map(item => ({
         message_type,
-        message_send: { _id: send_record._id },
-        message_content: item.data.body.content,
         message_id: item.data.message_id,
-        message_receiver_type: item.data.msg_type,
-        message_receiver: item.data.chat_id,
+        message_send: { _id: send_record._id },
+        receive_id_type,
+        msg_type: item.data.msg_type,
+        receive_id: item.data.chat_id,
+        content: item.data.body.content,
         result: item.code === 0 ? "option_success" : "option_failed"
       }));
       const result = await application.data.object("object_message_log").batchCreate(recordList);

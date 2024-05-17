@@ -316,7 +316,12 @@ module.exports = async function (params, context, logger) {
           // 异步更新消息发送日志
           const res = await baas.tasks.createAsyncTask(
             "UpdateMessageSendLog",
-            { sendMessageResult, send_record: { _id: recordId }, message_type: message_def.option_message_type }
+            { 
+              receive_id_type,
+              sendMessageResult, 
+              send_record: { _id: recordId }, 
+              message_type: message_def.option_message_type,
+            }
           );
           logger.info("执行异步任务", { res });
           logger.info("更新日志记录成功");
