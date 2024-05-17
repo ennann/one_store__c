@@ -34,11 +34,11 @@ module.exports = async function (params, context, logger) {
             .findOne();
         const newBatchNo =  + `${(existingTasks.length + 1).toString().padStart(6, '0')}`;
         response.batch_no = object_chat_message_def_query.number + '-' + newBatchNo;
+        return response;
     } catch (error) {
         logger.error(`数据库操作失败: ${error}`);
         response.code = -1;
         response.message = '内部服务器错误';
+        return response;
     }
-    response.code = -1;
-    response.message = "缺少必要参数：消息定义数据";
 }
