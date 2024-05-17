@@ -1,7 +1,8 @@
 // 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
 // 如安装 linq 包后就可以引入并使用这个包
 // const linq = require("linq");
-
+const dayjs = require("dayjs");
+const { createLimiter } = require('../utils');
 /**
  * @param {Params}  params     自定义参数
  * @param {Context} context    上下文参数，可通过此参数下钻获取上下文变量信息等
@@ -15,14 +16,6 @@ module.exports = async function (params, context, logger) {
 
   const { record } = params;
 
-  const records = await application.data.object("object_message_log")
-    .where({
-      message_send: { _id: record._id },
-      result: "option_failed"
-    })
-    .select("content", "msg_type", "receive_id", "receive_id_type", "_id")
-    .find();
-
   const sendMessage = async ({ content, msg_type, receive_id, receive_id_type, _id }) => {
     const msgInfo = { content, msg_type, receive_id, receive_id_type };
     logger.info({ msgInfo });
@@ -33,6 +26,19 @@ module.exports = async function (params, context, logger) {
       logger.error("发送消息失败", error);
     }
   };
+
+  const records = await application.data.object("object_message_log")
+    .where({
+      message_send: { _id: record._id },
+      result: "option_failed"
+    })
+    .select("content", "msg_type", "receive_id", "receive_id_type", "_id")
+    .find();
+
+  if (records.length === 0) {
+    logger.info("记录中没有发送失败的消息，无需重试");
+    return
+  }
 
   // 限流器
   const limitSendMessage = createLimiter(sendMessage);
@@ -75,7 +81,7 @@ module.exports = async function (params, context, logger) {
       send_end_datetime: dayjs().valueOf(),
       ...counts
     });
-    await application.data.object("object_message_send").batchUpdate(logData);
+    await application.data.object("object_message_log").batchUpdate(logData);
     logger.info("更新消息发送记录及日志成功");
   } catch (error) {
     logger.error("更新消息发送记录及日志失败", error);

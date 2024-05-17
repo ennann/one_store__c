@@ -12,12 +12,6 @@ const {createLimiter, newLarkClient} = require('../utils');
 module.exports = async function (params, context, logger) {
     // 日志功能
     logger.info(`定时生成任务记录函数开始执行 ${new Date()}`);
-    //获取符合条件的任务定义记录列表（内部获取）
-    //一次性非立即发布任务
-    // const query = {
-    //     option_status: "option_02", //启用
-    // };
-    // let finalTaskDefList = await fetchTaskDefRecords(query, '一次性非立即发布任务', logger);
 
     const {object_task_defs} = params;
     if (!object_task_defs) {
@@ -242,10 +236,12 @@ async function createStoreTaskEntry(finalTaskDefList, task, logger, client) {
             logger.info(`为任务处理记录[${task._id}]创建门店普通任务成功数量: ${successfulStoreTasks.length}, 失败数量: ${failedStoreTasks.length}`);
             const messageCardSendDatas = [];
             storeTaskCreateResults.forEach(item => {
-                messageCardSendDatas.push({
-                    sendMessages: item.messageCardSendData,
-                    storeTaskId: item.storeTaskId
-                });
+                if (item.messageCardSendData) {
+                    messageCardSendDatas.push({
+                        sendMessages: item.messageCardSendData,
+                        storeTaskId: item.storeTaskId
+                    });
+                }
             });
             //创建限流器
             const limitedsendFeishuMessage = createLimiter(sendFeishuMessage);
@@ -309,7 +305,6 @@ async function createStoreTaskEntryStart(task, logger, client) {
             content: "", //消息卡片内容  JSON
         }
         // 发送消息卡片
-        // todo: 补充消息卡片内的按钮
         try {
             let name = task.name;
             let priority = await faas.function("GetOptionName").invoke({

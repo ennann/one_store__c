@@ -21,11 +21,10 @@ module.exports = async function (params, context, logger) {
   // redis判断是否存在执行中任务
   const KEY = message_def._id;
   const redisValue = await baas.redis.get(KEY);
-  logger.info({ redisValue });
-  // if (redisValue) {
-  //   logger.info("已存在执行中发送消息任务");
-  //   return;
-  // };
+  if (redisValue) {
+    logger.info("已存在执行中发送消息任务");
+    return;
+  };
 
   let receive_id_type = message_def.send_channel === "option_group" ? "chat_id" : "open_id";
   let sendIds = []
@@ -275,10 +274,10 @@ module.exports = async function (params, context, logger) {
     }
 
     if (sendIds.length > 0) {
-      // 创建消息发送记录
-      const recordId = await createSendRecord();
       // 缓存执行记录
       await baas.redis.set(KEY, new Date().getTime());
+      // 创建消息发送记录
+      const recordId = await createSendRecord();
       // 限流器
       const limitSendMessage = createLimiter(sendMessage);
       // 统一调用发送
@@ -316,10 +315,10 @@ module.exports = async function (params, context, logger) {
           // 异步更新消息发送日志
           const res = await baas.tasks.createAsyncTask(
             "UpdateMessageSendLog",
-            { 
+            {
               receive_id_type,
-              sendMessageResult, 
-              send_record: { _id: recordId }, 
+              sendMessageResult,
+              send_record: { _id: recordId },
               message_type: message_def.option_message_type,
             }
           );
@@ -332,6 +331,7 @@ module.exports = async function (params, context, logger) {
     }
   } catch (error) {
     logger.error("生成并发送消息内容失败", error);
+  } finally {
     await baas.redis.set(KEY, null);  // redis置空
   }
 };
