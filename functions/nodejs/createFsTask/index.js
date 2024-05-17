@@ -17,7 +17,7 @@ module.exports = async function (params, context, logger) {
 
   const taskRecord = await application.data.object('object_store_task')
     .where({ _id: storeTaskId })
-    .select("name", "description", "task_plan_time", "_id")
+    .select("name", "description", "task_plan_time", "_id", "option_upload_attachementdd", "attachment", "option_upload_imagede", "image")
     .findOne();
 
   logger.info({ taskRecord });
@@ -42,17 +42,63 @@ module.exports = async function (params, context, logger) {
       if (taskRes.code === 0) {
         return { taskGuid: taskRes.data.task.guid, taskUrl: taskRes.data.task.url };
       }
-
       logger.error('创建任务失败：', taskRes);
-      return;
     } catch (e) {
       logger.error('创建任务异常：', e);
-      return;
     }
   };
 
-  const data = await createTask();
+  // 添加负责人
+  const updateMember = async (record) => {
+    try {
+      // 获取人员
+      // const userList = await faas.function('DeployMemberRange').invoke({ user_rule: taskRecord.user_rule });
+      if (userList.length === 0) {
+        throw new Error('缺少人员信息');
+      }
+      // 飞书任务更新负责人
+      const res = await client.task.v2.task.addMembers({
+        path: { task_guid: record.taskGuid },
+        data: {
+          members: userList.map(item => ({
+            role: 'assignee',
+            id: item.open_id
+          }))
+        },
+      });
+      logger.info({ res });
+      if (res.code !== 0) {
+        throw new Error('添加任务负责人失败', res);
+      }
+    } catch (error) {
+      throw new Error("添加任务负责人失败", error);
+    }
+  };
 
+  // 上传附件
+  const uploadFile = async (token, resource_id) => {
+    try {
+      const file = await application.resources.file.download(token);
+      await client.task.v2.attachment.upload({
+        path: { user_id_type: "open_id" },
+        data: {
+          file,
+          resource_id,
+          resource_type: "task",
+        }
+      })
+    } catch (error) {
+      logger.error("上传文件失败", error);
+    }
+  };
+
+  // 添加附件
+  const updateAttachment = async (record) => {
+    const fileList = [];
+    if()
+  };
+
+  const data = await createTask();
 
   if (data) {
     try {
@@ -63,31 +109,19 @@ module.exports = async function (params, context, logger) {
           taskRecord._id,
           { task_guid: data.taskGuid }
         );
-
-      // 获取人员
-      const userList = await faas.function('DeployMemberRange').invoke({ user_rule: taskRecord.user_rule });
-      // 飞书任务更新负责人
-      const res = await client.task.v2.task.addMembers({
-        path: { task_guid: data.taskGuid },
-        data: {
-          members: userList.map(item => ({
-            role: 'assignee',
-            id: item.open_id
-          }))
-        },
-      });
-      logger.info({ res });
-
-      if (res.code !== 0) {
-        logger.error('添加任务负责人失败', res);
-      }
+      await updateMember(data);
     } catch (e) {
-      logger.error(e)
+      logger.error(e);
     }
   }
 }
 
 const userList = [
+  {
+    email: 'huanghongzhi.4207@bytedance.com',
+    open_id: 'ou_ac1f06d7be75633f74165a487da8cf3d',
+    _id: 1798564594579460
+  },
   // {
   //   email: 'wangshujian@bytedance.com',
   //   open_id: 'ou_36c533e1bfe5010ab11f5420e8a76651',
@@ -108,9 +142,4 @@ const userList = [
   //   open_id: 'ou_e2999ed80997a3d5817c37815fcb99ac',
   //   _id: 1798281554498611
   // },
-  {
-    email: 'huanghongzhi.4207@bytedance.com',
-    open_id: 'ou_ac1f06d7be75633f74165a487da8cf3d',
-    _id: 1798564594579460
-  }
 ];

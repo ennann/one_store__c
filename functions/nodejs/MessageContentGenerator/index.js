@@ -175,7 +175,7 @@ module.exports = async function (params, context, logger) {
         };
       // 视频类型消息直接发成文本类型
       case 'option_video':
-        const textObj = { text: `${message_def.message_title} ${message_def.video_url}` };
+        const textObj = { text: `${message_def.video_url} ${message_def.message_title} ` };
         return {
           msg_type: "text",
           content: JSON.stringify(textObj)
@@ -203,6 +203,8 @@ module.exports = async function (params, context, logger) {
   const createSendRecord = async () => {
     try {
       const times = new Date().getTime();
+      const batch_number = await faas.function('GenerateMessageBatchNumber').invoke({ record: message_def });
+      logger.info({batch_number});
       const batch_no = message_def._id + '-' + times;
       const createData = {
         batch_no,

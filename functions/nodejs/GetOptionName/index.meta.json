@@ -6,7 +6,7 @@
     "en_US": null
   },
   "description": {
-    "zh_CN": "根据对象名称，全局变量字段API和选项API获取选项名称",
+    "zh_CN": "根据对象名称，对象API字段和对象API字段值获取选项名称",
     "en_US": null
   },
   "isPublicAPI": false,
