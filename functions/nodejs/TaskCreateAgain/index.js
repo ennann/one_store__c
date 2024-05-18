@@ -231,15 +231,11 @@ async function createStoreTaskEntryStart(object_task_def,object_store_task, logg
                 option_type: "option_priority",
                 option_api: object_store_task.option_priority
             });
-            let url = "";
             //判断执行流程的url
-            if (object_task_def.option_upload_image === "option_yes" ||
-                object_task_def.option_input_information === "option_yes" ||
-                object_task_def.option_upload_attachement === "option_yes" ){
-                url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&objectApiName2RecordIds%5Bone_store__c__object_aadgfx2qchmdi%5D%5B0%5D=${storeTaskId}&1=1&version=v2&actionApiName=automation_0e8567ea5a4&namespace=one_store__c&recordID=`;
-            }else{
-                url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&variables%5B0%5D%5BvarApiName%5D=customizeInput__original__717a10b5&variables%5B0%5D%5BinputValue%5D=${storeTaskId}&1=1&actionApiName=automation_952bc370750&namespace=one_store__c&recordID=&version=v2`;
-            }
+            const url =  "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + storeTaskId;
+            const pc_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + storeTaskId;
+            const android_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + storeTaskId;
+            const ios_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + storeTaskId;
             const content = {
                 "config": {
                     "wide_screen_mode": true
@@ -283,10 +279,15 @@ async function createStoreTaskEntryStart(object_task_def,object_store_task, logg
                                 "tag": "button",
                                 "text": {
                                     "tag": "plain_text",
-                                    "content": "完成任务"
+                                    "content": "查看详情"
                                 },
-                                "url": url,
-                                "type": "primary"
+                                "type": "primary",
+                                "multi_url": {
+                                    "url": url,
+                                    "pc_url": pc_url,
+                                    "android_url": android_url,
+                                    "ios_url": ios_url
+                                }
                             }
                         ]
                     }

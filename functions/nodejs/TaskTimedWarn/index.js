@@ -61,39 +61,39 @@ module.exports = async function (params, context, logger) {
     for (const objectStoreTaskElement of object_store_task) {
 
         //任务定义
-        const object_task_def = await application.data.object("object_task_def")
-            .select('_id',
-                'name', //任务名称
-                'task_number', //任务编码
-                'description', //任务描述
-                'task_tag', //任务分类（对象）
-                'option_method', //任务周期（全局选项）：计划任务：option_01，一次性任务：option_02
-                'option_time_cycle', //任务定义（全局选项）：天:option_day，周:option_week，月:option_month，季度:option_quarter，半年:option_half_year，年:option_year
-                'repetition_rate', //重复频率
-                'boolean_public_now', //是否立即发布
-                'datetime_publish', //发布时间
-                'datetime_start', //开始时间
-                'datetime_end', //结束时间
-                'deal_duration', //任务处理时长
-                'option_status', //状态（全局选项）：新建:option_01，启用:option_02，禁用:option_03
-                'send_channel', //发送渠道（全局选项）：发送到飞书群:option_group，发送到个人:option_user
-                'option_handler_type', //任务处理人类型（全局选项）：飞书群:option_01，责任人：option_02
-                'chat_rule', //群组筛选规则（对象）
-                'user_rule', //人员筛选规则（对象）
-                'carbon_copy', //任务抄送人（对象）
-                'option_is_check', //任务是否需要验收(全局选项)：是：option_yes，否：option_no
-                'check_flow', //任务验收流程(对象)
-                'task_publisher', //发布人（对象）
-                'publish_department', //发布人所属部门(对象)
-                'option_priority', //优先级(全局选项)：高:option_01，中:option_02，低:option_03
-                'option_upload_image', //任务要求上传图片
-                'option_input_information', //任务要求录入完成信息
-                'option_upload_attachement', //任务要求上传附件
-                'is_workday_support', //是否支持工作日历 布尔
-                'warning_time', //设置预警时间（小时）
-                'set_warning_time' //设置任务到期前提醒
-            )
-            .where({_id: objectStoreTaskElement.task_def._id}).findOne();
+        // const object_task_def = await application.data.object("object_task_def")
+        //     .select('_id',
+        //         'name', //任务名称
+        //         'task_number', //任务编码
+        //         'description', //任务描述
+        //         'task_tag', //任务分类（对象）
+        //         'option_method', //任务周期（全局选项）：计划任务：option_01，一次性任务：option_02
+        //         'option_time_cycle', //任务定义（全局选项）：天:option_day，周:option_week，月:option_month，季度:option_quarter，半年:option_half_year，年:option_year
+        //         'repetition_rate', //重复频率
+        //         'boolean_public_now', //是否立即发布
+        //         'datetime_publish', //发布时间
+        //         'datetime_start', //开始时间
+        //         'datetime_end', //结束时间
+        //         'deal_duration', //任务处理时长
+        //         'option_status', //状态（全局选项）：新建:option_01，启用:option_02，禁用:option_03
+        //         'send_channel', //发送渠道（全局选项）：发送到飞书群:option_group，发送到个人:option_user
+        //         'option_handler_type', //任务处理人类型（全局选项）：飞书群:option_01，责任人：option_02
+        //         'chat_rule', //群组筛选规则（对象）
+        //         'user_rule', //人员筛选规则（对象）
+        //         'carbon_copy', //任务抄送人（对象）
+        //         'option_is_check', //任务是否需要验收(全局选项)：是：option_yes，否：option_no
+        //         'check_flow', //任务验收流程(对象)
+        //         'task_publisher', //发布人（对象）
+        //         'publish_department', //发布人所属部门(对象)
+        //         'option_priority', //优先级(全局选项)：高:option_01，中:option_02，低:option_03
+        //         'option_upload_image', //任务要求上传图片
+        //         'option_input_information', //任务要求录入完成信息
+        //         'option_upload_attachement', //任务要求上传附件
+        //         'is_workday_support', //是否支持工作日历 布尔
+        //         'warning_time', //设置预警时间（小时）
+        //         'set_warning_time' //设置任务到期前提醒
+        //     )
+        //     .where({_id: objectStoreTaskElement.task_def._id}).findOne();
 
         let description = objectStoreTaskElement.description
         let priority = await faas.function("GetOptionName").invoke({
@@ -101,14 +101,11 @@ module.exports = async function (params, context, logger) {
             option_type: "option_priority",
             option_api: objectStoreTaskElement.option_priority
         });
-        let url = "";
-        if (object_task_def.option_upload_image === "option_yes" ||
-            object_task_def.option_input_information === "option_yes" ||
-            object_task_def.option_upload_attachement === "option_yes") {
-            url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&objectApiName2RecordIds%5Bone_store__c__object_aadgfx2qchmdi%5D%5B0%5D=${objectStoreTaskElement._id}&1=1&version=v2&actionApiName=automation_0e8567ea5a4&namespace=one_store__c&recordID=`;
-        } else {
-            url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&variables%5B0%5D%5BvarApiName%5D=customizeInput__original__717a10b5&variables%5B0%5D%5BinputValue%5D=${objectStoreTaskElement._id}&1=1&actionApiName=automation_952bc370750&namespace=one_store__c&recordID=&version=v2`;
-        }
+        //判断执行流程的url
+        const url =  "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + objectStoreTaskElement._id;
+        const pc_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + objectStoreTaskElement._id;
+        const android_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + objectStoreTaskElement._id;
+        const ios_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + objectStoreTaskElement._id;
         const content = {
             "config": {
                 "wide_screen_mode": true
@@ -152,10 +149,15 @@ module.exports = async function (params, context, logger) {
                             "tag": "button",
                             "text": {
                                 "tag": "plain_text",
-                                "content": "完成任务"
+                                "content": "查看详情"
                             },
-                            "url": url,
-                            "type": "primary"
+                            "type": "primary",
+                            "multi_url": {
+                                "url": url,
+                                "pc_url": pc_url,
+                                "android_url": android_url,
+                                "ios_url": ios_url
+                            }
                         }
                     ]
                 }
