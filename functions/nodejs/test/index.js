@@ -18,21 +18,18 @@ module.exports = async function (params, context, logger) {
   // // logger.info(fieldApiNames);
 
 
-  [
-    {
-      email: "wangshujian@bytedance.com"
-    }
-  ]
-
-
    
   query = {}
   let user_records = await application.data.object("_user")
-    .select("_id", "_name", "_email", "_phoneNumber", "_lark_user_id")
+    .select("_id", "_name", "_email", "_department",  "_phoneNumber", "_lark_user_id")
     .where(query)
     .find();
   
   console.info(user_records);
+
+  await application.data.object('object_chat_member').create({
+    chat_member: { _id: 1798280532476963, _name: [ { language_code: 2052, text: '王书建' } ] }
+  })
 
 
   return

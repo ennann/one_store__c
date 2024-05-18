@@ -92,9 +92,7 @@ module.exports = async function (params, context, logger) {
     logger.info({ divs })
 
     for (const div of divs) {
-      let data = [];
       const imgs = [];
-
       // 图片
       while ((match = imgRegex.exec(div)) !== null) {
         const srcMatch = div.match(/src="([^"]*)"/);
@@ -105,46 +103,18 @@ module.exports = async function (params, context, logger) {
         const imgElement = getCardImgElement(imgKeys);
         formattedData.push(imgElement);
       }
-
       logger.info({ div });
-      formattedData.push({
-        tag: "div",
-        text: {
-          tag: "lark_md",
-          content: div
-        }
-      })
-      // const textSegments = div.replace(imgRegex, '').split(tagRegex);
-      // const textList = textSegments.filter(i => !!i);
-      // if (textList.length === 1) {
-      //   let _item = { tag: 'text', text: textList[0], style: getStyles(div) }
-      //   if (/<a/.test(div)) {
-      //     const aMatch = div.match(hrefRegex);
-      //     _item = {
-      //       ..._item,
-      //       tag: "a",
-      //       href: aMatch?.[1] ?? ''
-      //     }
-      //   }
-      //   data.push(_item);
-      // }
-      // if (textList.length > 1) {
-      //   const matches = div.match(/<[^>]+>|[^<]+/g);
-      //   const list = mergeTags(matches);
-      //   list.forEach((text, index) => {
-      //     let item = { tag: 'text', text: textList[index], style: getStyles(text) };
-      //     if (/<a/.test(text)) {
-      //       const match = text.match(hrefRegex);
-      //       item = {
-      //         ...item,
-      //         tag: "a",
-      //         href: match?.[1] ?? ''
-      //       }
-      //     }
-      //     data.push(item);
-      //   });
-      // }
-      // data.length > 0 && formattedData.push(data);
+      if ((match = imgRegex.exec(div)) === null) {
+        const content = parseMarkdown(div);
+        logger.info({ content });
+        formattedData.push({
+          tag: "div",
+          text: {
+            tag: "markdown",
+            content
+          }
+        });
+      }
     }
     logger.info({ formattedData });
     return {
@@ -166,8 +136,7 @@ module.exports = async function (params, context, logger) {
       // 视频类型消息直接发成文本类型
       case 'option_video':
         const textObj = {
-          text: `${record.video_url} 
-                 ${record.message_title ?? ''}`
+          text: `${record.message_title ?? ''}\n\n${record.video_url}`
         }
         return {
           msg_type: "text",
@@ -244,57 +213,22 @@ const getCardImgElement = (imageKeys) => {
   return elements;
 };
 
-function getStyles(text) {
-  const style = [];
-  if (/<u>/.test(text)) {
-    style.push("underline");
-  }
-  if (/<b>/.test(text)) {
-    style.push("bold");
-  }
-  if (/<i>/.test(text)) {
-    style.push("italic");
-  }
-  if (/<s>/.test(text)) {
-    style.push("lineThrough");
-  }
-  return style;
-}
+const parseMarkdown = (text) => {
+  const tagRegex = /<([a-z]+)[^>]*>(.*?)<\/\1>/;
+  const replaceText = str => str.replace(/<[^>]*>/g, '');
 
-function mergeTags(arr) {
-  let mergedArray = [];
-  let tempStr = '';
+  const tagHandlers = {
+    a: (match, content) => {
+      const url = match.match(/href="(.*?)"/)[1];
+      return "[" + replaceText(content) + "](" + url + ")";
+    },
+    b: (content) => "**" + replaceText(content) + "**",
+    i: (content) => "*" + replaceText(content) + "*",
+    s: (content) => "~~~" + replaceText(content) + "~~~"
+  };
 
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i].startsWith('<') && arr[i].endsWith('>')) {
-      // 如果是以标签开始的字符串，则将其添加到tempStr中
-      tempStr += arr[i];
-      if (arr[i].endsWith('</')) {
-        // 如果是以闭合标签结束的字符串，则将tempStr添加到mergedArray中，并重置tempStr
-        mergedArray.push(tempStr);
-        tempStr = '';
-      }
-    } else {
-      // 如果不是以标签开始的字符串，则直接添加到mergedArray中
-      if (tempStr) {
-        // 如果tempStr中有内容，说明前面有标签，将其添加到mergedArray中
-        mergedArray.push(tempStr);
-        tempStr = ''; // 重置tempStr
-      }
-      mergedArray.push(arr[i]);
-    }
-  }
-
-  const list = mergedArray.reduce((pre, ele, index, arr) => {
-    if (/</.test(ele) || /<\/[^>]+>/.test(ele)) {
-      return pre;
-    }
-    if (/</.test(arr[index - 1]) && /<\/[^>]+>/.test(arr[index + 1])) {
-      return [...pre, arr[index - 1] + ele + arr[index + 1]];
-    }
-    return [...pre, ele];
-  }, []);
-
-  return list;
-}
-
+  return text.replace(tagRegex, (match, tagName, content) => {
+    const handler = tagHandlers[tagName];
+    return handler ? handler(match, content) : content;
+  });
+};

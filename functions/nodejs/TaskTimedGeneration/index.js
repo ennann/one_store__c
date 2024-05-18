@@ -176,7 +176,7 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
                     option_upload_attachementdd: item.option_upload_attachement, //任务要求上传附件
                     set_warning_time: item.set_warning_time, //是否设置任务到期前提醒
                     warning_time: item.warning_time, //预警时间（小时）
-                    source_department: {_id: department_record._id, name: department_record._name}, //任务来源
+                    source_department: { _id: department_record._id, _name: department_record._name }, //任务来源
                     option_priority: item.option_priority, //优先级
                 };
                 //为任务处理记录（任务批次）创建门店普通任务
@@ -206,7 +206,7 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
                     option_upload_attachementdd: item.option_upload_attachement, //任务要求上传附件
                     set_warning_time: item.set_warning_time, //是否设置任务到期前提醒
                     warning_time: item.warning_time, //预警时间（小时）
-                    source_department: {_id: department_record._id, name: department_record._name}, //任务来源
+                    source_department: { _id: department_record._id, _name: department_record._name }, //任务来源
                     option_priority: item.option_priority, //优先级
                 };
                 //为任务处理记录（任务批次）创建门店普通任务
@@ -234,11 +234,11 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
             const updateData = {
                 _id: task._id,
                 option_status: 'option_05',
-                option_status_show: `任务创建成功,成功发布任务数量：${storeTaskCreateResults.length}`,
+                option_status_show: `任务创建成功,成功发布任务数量：${successfulStoreTasks.length}`,
             };
             if (failedStoreTasks.length > 0) {
                 updateData.option_status = 'option_03';
-                updateData.option_status_show = `任务创建部分成功,应创建任务数量：${successfulStoreTasks.length},成功数量：${successfulStoreTasks.length},失败数量：${failedStoreTasks.length}`;
+                updateData.option_status_show = `任务创建部分成功,应创建任务数量：${storeTaskCreateResults.length},成功数量：${successfulStoreTasks.length},失败数量：${failedStoreTasks.length}`;
             }
             //发送飞书卡片消息
             logger.info(`根据门店普通任务创建记录需要发送飞书数量---->${messageCardSendDatas.length}`);
@@ -345,7 +345,7 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
                     {
                         tag: 'div',
                         text: {
-                            content: '任务来源：' + task.source_department.name,
+                            content: '任务来源：' + task.source_department?._name.filter(item => item.language_code === 2052)?.text,
                             tag: 'plain_text',
                         },
                     },

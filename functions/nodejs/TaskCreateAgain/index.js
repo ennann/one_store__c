@@ -59,7 +59,13 @@ module.exports = async function (params, context, logger) {
         .where({_id: object_task_create_monitor.task_def._id}).findOne();
     // task 代表任务处理记录
     const createDatas = [];
-    let task_plan_time = dayjs(object_task_def.datetime_start).add(Number.parseInt(object_task_def.deal_duration), 'day').valueOf();
+    let task_plan_time = dayjs(object_task_create_monitor.task_create_time).add(Number.parseInt(object_task_def.deal_duration), 'day').valueOf();
+    //获取部门详情
+    let department_record = await application.data.object('_department').select('_id', "_name")
+        .where({_id: object_task_def.publish_department.id || object_task_def.publish_department._id})
+        .findOne();
+    logger.info(`获取部门详情->`, JSON.stringify(department_record, null, 2));
+
     //飞书群
     if (object_task_def.option_handler_type === "option_01") {
         //群组赛选规则
@@ -81,10 +87,7 @@ module.exports = async function (params, context, logger) {
                 option_upload_attachementdd: object_task_def.option_upload_attachement,  //任务要求上传附件
                 set_warning_time: object_task_def.set_warning_time,  //是否设置任务到期前提醒
                 warning_time: object_task_def.warning_time,  //预警时间（小时）
-                source_department: {
-                    _id: object_task_def.publish_department._id,
-                    name: object_task_def.publish_department.name
-                },//任务来源
+                source_department: {_id: department_record._id, name: department_record._name}, //任务来源
                 option_priority: object_task_def.option_priority,//优先级
             };
             //为任务处理记录创建门店普通任务
@@ -115,10 +118,7 @@ module.exports = async function (params, context, logger) {
                 option_upload_attachementdd: object_task_def.option_upload_attachement,  //任务要求上传附件
                 set_warning_time: object_task_def.set_warning_time,  //是否设置任务到期前提醒
                 warning_time: object_task_def.warning_time,  //预警时间（小时）
-                source_department: {
-                    _id: object_task_def.publish_department._id,
-                    name: object_task_def.publish_department.name
-                },//任务来源
+                source_department: {_id: department_record._id, _name: department_record._name}, //任务来源
                 option_priority: object_task_def.option_priority,//优先级
             };
             //为任务处理记录创建门店普通任务
@@ -251,7 +251,7 @@ async function createStoreTaskEntryStart(object_task_def,object_store_task, logg
                     {
                         "tag": "div",
                         "text": {
-                            "content": "任务来源：" + object_store_task.source_department.name,
+                            "content": "任务来源：" + object_store_task.source_department?._name.filter(item => item.language_code === 2052)?.text,
                             "tag": "plain_text"
                         }
                     },

@@ -42,7 +42,7 @@ module.exports = async function (params, context, logger) {
     }
     if (object_store_tasks.length > 0) {
         for (const item of object_store_tasks) {
-
+            logger.info("item->",JSON.stringify(item,null,2));
             //任务名称
             const object_store_tasks_name = item.name;
 
@@ -71,7 +71,7 @@ module.exports = async function (params, context, logger) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "任务来源：" + item.source_department._name,
+                            "content": "任务来源：" + item.source_department?._name.filter(item => item.language_code === 2052)?.text,
                             "tag": "plain_text"
                         }
                     },

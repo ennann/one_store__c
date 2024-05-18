@@ -14,7 +14,7 @@ yarn-error.log*
 
 output
 
-functions/nodejs/core
+**/core
 functions/nodejs/function-debug.log
 
 .ae
