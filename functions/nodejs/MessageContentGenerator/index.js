@@ -99,6 +99,8 @@ module.exports = async function (params, context, logger) {
         const urlParams = new URLSearchParams(srcMatch[1].split('?')[1]);
         const token = urlParams.get('token');
         imgs.push({ token });
+      }
+      if (imgs.length > 0) {
         const imgKeys = await getImageKeys(imgs);
         const imgElement = getCardImgElement(imgKeys);
         formattedData.push(imgElement);
@@ -198,7 +200,7 @@ const getCardImgElement = (imageKeys) => {
       }
     ]
   }));
-  const elements = [{
+  const elements = {
     tag: "column_set",
     background_style: "default",
     horizontal_spacing: "default",
@@ -208,7 +210,7 @@ const getCardImgElement = (imageKeys) => {
       : [2, 4].includes(imageKeys.length)
         ? "bisect"
         : "trisect",
-  }];
+  };
 
   return elements;
 };

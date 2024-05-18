@@ -71,7 +71,7 @@ module.exports = async function (params, context, logger) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "任务来源：" + item.source_department?._name.filter(item => item.language_code === 2052)?.text,
+                            "content": "任务来源：" + item.source_department._name.find(item => item.language_code === 2052).text,
                             "tag": "plain_text"
                         }
                     },

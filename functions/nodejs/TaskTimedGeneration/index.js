@@ -330,6 +330,7 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
             const android_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + storeTaskId._id;
             const ios_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + storeTaskId._id;
             const hourDiff = (task.task_plan_time - dayjs().valueOf()) / 36e5;
+            logger.info("task.source_department--->",);
             const content = {
                 config: {
                     wide_screen_mode: true,
@@ -345,7 +346,7 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
                     {
                         tag: 'div',
                         text: {
-                            content: '任务来源：' + task.source_department?._name.filter(item => item.language_code === 2052)?.text,
+                            content: '任务来源：' + task.source_department._name.find(item => item.language_code === 2052).text,
                             tag: 'plain_text',
                         },
                     },

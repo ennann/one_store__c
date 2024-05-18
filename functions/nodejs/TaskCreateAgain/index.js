@@ -251,7 +251,7 @@ async function createStoreTaskEntryStart(object_task_def,object_store_task, logg
                     {
                         "tag": "div",
                         "text": {
-                            "content": "任务来源：" + object_store_task.source_department?._name.filter(item => item.language_code === 2052)?.text,
+                            "content": "任务来源：" + object_store_task.source_department._name.find(item => item.language_code === 2052).text,
                             "tag": "plain_text"
                         }
                     },
