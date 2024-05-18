@@ -186,8 +186,7 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
         } else if (item.option_handler_type === 'option_02') {
             //人员塞选规则
             const userList = await faas.function('DeployMemberRange').invoke({user_rule: item.user_rule});
-            logger.info(`人员筛选规则[${item.user_rule._id}]返回人员数量->`, userList.length);
-            logger.info(`人员筛选规则[${item.user_rule._id}]返回人员详情->`, JSON.stringify(userList, null, 2));
+            logger.info(`人员筛选规则[${item.user_rule._id || item.user_rule.id}]返回人员数量->`, userList.length, JSON.stringify(userList, null, 2));
             for (const userListElement of userList) {
                 const createData = {
                     name: item.name,
@@ -223,8 +222,8 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
             const failedStoreTasks = storeTaskCreateResults.filter(result => result.code !== 0);
             logger.info(`为任务处理记录（任务批次）[${task._id}]创建门店普通任务成功数量: ${successfulStoreTasks.length}, 失败数量: ${failedStoreTasks.length}`);
             const messageCardSendDatas = [];
-            storeTaskCreateResults.forEach(item => {
-                if (item.messageCardSendData) {
+            successfulStoreTasks.forEach(item => {
+                if (item.messageCardSendData && Object.keys(item.messageCardSendData).length > 0) {
                     messageCardSendDatas.push(item.messageCardSendData);
                 }
             });
