@@ -2,7 +2,7 @@
   "apiID": "one_store__c__function_aadgiwwhl6mhy",
   "apiName": "UpdateMessageSendLog",
   "label": {
-    "zh_CN": "更新消息发送日志",
+    "zh_CN": "创建消息发送日志",
     "en_US": ""
   },
   "description": {

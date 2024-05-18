@@ -13,9 +13,9 @@
   "frontendSDKInvokable": false,
   "input": [
     {
-      "key": "message_def",
+      "key": "record",
       "type": "Record",
-      "label": "消息定义记录",
+      "label": "消息定义",
       "required": true,
       "description": "消息定义记录",
       "objectApiName": "object_chat_message_def"

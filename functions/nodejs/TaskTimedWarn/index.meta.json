@@ -1,6 +1,6 @@
 {
   "apiID": "one_store__c__function_aadgihy75dqhy",
-  "apiName": "TimedWarnTask",
+  "apiName": "TaskTimedWarn",
   "label": {
     "zh_CN": "【任务】任务到期前提醒",
     "en_US": null

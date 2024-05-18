@@ -12,7 +12,7 @@ const { chunkArray } = require('../utils');
  */
 module.exports = async function (params, context, logger) {
   // 日志功能
-  logger.info(`更新消息发送日志 函数开始执行`, params);
+  logger.info(`创建消息发送日志 函数开始执行`, params);
 
   const { send_record, sendMessageResult, message_type, receive_id_type } = params;
 

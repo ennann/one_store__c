@@ -32,6 +32,10 @@ module.exports = async function (params, context, logger) {
     let messageCardSendDatas = []
     let taskCount = 0;
     let userCount = 0;
+    //查询任务定义
+    const task_def_record = await application.data.object("object_task_def")
+        .select("_id", "option_upload_image", "option_input_information", "option_upload_attachement","send_channel")
+        .where({_id: object_task_create_monitor.task_def._id}).findOne();
 
     for (const item of object_store_tasks) {
         let priority = await faas.function("GetOptionName").invoke({
@@ -39,7 +43,15 @@ module.exports = async function (params, context, logger) {
             option_type: "option_priority",
             option_api: item.option_priority
         });
-        let url = await application.globalVar.getVar("task_click_url");
+        let url = "";
+        //判断执行流程的url
+        if (task_def_record.option_upload_image === "option_yes" ||
+            task_def_record.option_input_information === "option_yes" ||
+            task_def_record.option_upload_attachement === "option_yes") {
+            url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&objectApiName2RecordIds%5Bone_store__c__object_aadgfx2qchmdi%5D%5B0%5D=${item._id}&1=1&version=v2&actionApiName=automation_0e8567ea5a4&namespace=one_store__c&recordID=`;
+        } else {
+            url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&variables%5B0%5D%5BvarApiName%5D=customizeInput__original__717a10b5&variables%5B0%5D%5BinputValue%5D=${item._id}&1=1&actionApiName=automation_952bc370750&namespace=one_store__c&recordID=&version=v2`;
+        }
         const content = {
             "config": {
                 "wide_screen_mode": true
@@ -83,7 +95,7 @@ module.exports = async function (params, context, logger) {
                             "tag": "button",
                             "text": {
                                 "tag": "plain_text",
-                                "content": "百度一下"
+                                "content": "完成任务"
                             },
                             "url": url,
                             "type": "primary"
@@ -117,13 +129,10 @@ module.exports = async function (params, context, logger) {
             taskCount++;
         } else {
             const feishuPeople = await application.data.object('_user')
-                .select('_id', '_email', '_department')
+                .select('_id', "_department","_lark_user_id")
                 .where({_id: item.task_handler._id}).findOne();
             //判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
-            let object_task_def = await application.data.object("object_task_def")
-                .select("_id", "send_channel")
-                .where({_id: item.task_def._id || item.task_def.id}).findOne();
-            if (object_task_def.send_channel === "option_group") {
+            if (task_def_record.send_channel === "option_group") {
                 data.receive_id_type = "chat_id"
                 let object_feishu_chat = await application.data.object("object_feishu_chat")
                     .select("_id", "chat_id")
@@ -132,27 +141,12 @@ module.exports = async function (params, context, logger) {
                 messageCardSendDatas.push(data);
                 userCount++;
             } else {
-                data.receive_id_type = "open_id"
-                try {
-                    const emails = [];
-                    emails.push(feishuPeople._email);
-                    //获取open_id
-                    const res = await client.contact.user.batchGetId({
-                        params: {user_id_type: "open_id"},
-                        data: {emails: emails}
-                    });
-                    const user = res.data.user_list.map(item => ({
-                        email: item.email,
-                        open_id: item.user_id
-                    }));
-                    data.receive_id = user[0].open_id;
-                    content.header.title.content = "【催办消息】" + item.task_handler._name + "有一条" + item.name + "门店任务请尽快处理！";
-                    data.content = JSON.stringify(content);
-                    messageCardSendDatas.push(data);
-                    userCount++;
-                } catch (error) {
-                    logger.error(`[${feishuPeople._id}]用户邮箱为null！`, error);
-                }
+                data.receive_id_type = "user_id"
+                data.receive_id = feishuPeople._lark_user_id;
+                content.header.title.content = "【催办消息】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + item.name + "门店任务请尽快处理！";
+                data.content = JSON.stringify(content);
+                messageCardSendDatas.push(data);
+                userCount++;
             }
         }
     }

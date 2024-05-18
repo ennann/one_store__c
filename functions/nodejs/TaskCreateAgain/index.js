@@ -24,7 +24,39 @@ module.exports = async function (params, context, logger) {
     const client = await newLarkClient({userId: context.user._id}, logger);
 
     //任务定义 
-    const object_task_def = await application.data.object("object_task_def").select().where({_id: object_task_create_monitor.task_def._id}).findOne();
+    const object_task_def = await application.data.object("object_task_def")
+        .select('_id',
+            'name', //任务名称
+            'task_number', //任务编码
+            'description', //任务描述
+            'task_tag', //任务分类（对象）
+            'option_method', //任务周期（全局选项）：计划任务：option_01，一次性任务：option_02
+            'option_time_cycle', //任务定义（全局选项）：天:option_day，周:option_week，月:option_month，季度:option_quarter，半年:option_half_year，年:option_year
+            'repetition_rate', //重复频率
+            'boolean_public_now', //是否立即发布
+            'datetime_publish', //发布时间
+            'datetime_start', //开始时间
+            'datetime_end', //结束时间
+            'deal_duration', //任务处理时长
+            'option_status', //状态（全局选项）：新建:option_01，启用:option_02，禁用:option_03
+            'send_channel', //发送渠道（全局选项）：发送到飞书群:option_group，发送到个人:option_user
+            'option_handler_type', //任务处理人类型（全局选项）：飞书群:option_01，责任人：option_02
+            'chat_rule', //群组筛选规则（对象）
+            'user_rule', //人员筛选规则（对象）
+            'carbon_copy', //任务抄送人（对象）
+            'option_is_check', //任务是否需要验收(全局选项)：是：option_yes，否：option_no
+            'check_flow', //任务验收流程(对象)
+            'task_publisher', //发布人（对象）
+            'publish_department', //发布人所属部门(对象)
+            'option_priority', //优先级(全局选项)：高:option_01，中:option_02，低:option_03
+            'option_upload_image', //任务要求上传图片
+            'option_input_information', //任务要求录入完成信息
+            'option_upload_attachement', //任务要求上传附件
+            'is_workday_support', //是否支持工作日历 布尔
+            'warning_time', //设置预警时间（小时）
+            'set_warning_time' //设置任务到期前提醒
+            )
+        .where({_id: object_task_create_monitor.task_def._id}).findOne();
     // task 代表任务处理记录
     const createDatas = [];
     let task_plan_time = dayjs(object_task_def.datetime_start).add(Number.parseInt(object_task_def.deal_duration), 'day').valueOf();
@@ -101,7 +133,7 @@ module.exports = async function (params, context, logger) {
     logger.info(`需要为任务处理记录[${object_task_create_monitor._id}]创建的门店普通任务数量->`, createDatas.length);
 
     if (createDatas.length > 0) {
-        const storeTaskCreateResults = await Promise.all(createDatas.map(object_store_task => createStoreTaskEntryStart(object_store_task, logger, client)));
+        const storeTaskCreateResults = await Promise.all(createDatas.map(object_store_task => createStoreTaskEntryStart(object_task_def,object_store_task, logger, client)));
         const successfulStoreTasks = storeTaskCreateResults.filter(result => result.code === 0);
         const failedStoreTasks = storeTaskCreateResults.filter(result => result.code !== 0);
         logger.info(`为任务处理记录[${object_task_create_monitor._id}]创建门店普通任务成功数量: ${successfulStoreTasks.length}, 失败数量: ${failedStoreTasks.length}`);
@@ -161,7 +193,7 @@ module.exports = async function (params, context, logger) {
     }
 }
 
-async function createStoreTaskEntryStart(object_store_task, logger, client) {
+async function createStoreTaskEntryStart(object_task_def,object_store_task, logger, client) {
     try {
         //判断是否发送成功者，发送成功者不再发送
         const object_store_task_out = await application.data.object("object_store_task")
@@ -194,13 +226,20 @@ async function createStoreTaskEntryStart(object_store_task, logger, client) {
         }
         // 发送消息卡片
         try {
-            let name = object_store_task.name;
             let priority = await faas.function("GetOptionName").invoke({
                 table_name: "object_store_task",
                 option_type: "option_priority",
                 option_api: object_store_task.option_priority
             });
-            let url = await application.globalVar.getVar("task_click_url");
+            let url = "";
+            //判断执行流程的url
+            if (object_task_def.option_upload_image === "option_yes" ||
+                object_task_def.option_input_information === "option_yes" ||
+                object_task_def.option_upload_attachement === "option_yes" ){
+                url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&objectApiName2RecordIds%5Bone_store__c__object_aadgfx2qchmdi%5D%5B0%5D=${storeTaskId}&1=1&version=v2&actionApiName=automation_0e8567ea5a4&namespace=one_store__c&recordID=`;
+            }else{
+                url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&variables%5B0%5D%5BvarApiName%5D=customizeInput__original__717a10b5&variables%5B0%5D%5BinputValue%5D=${storeTaskId}&1=1&actionApiName=automation_952bc370750&namespace=one_store__c&recordID=&version=v2`;
+            }
             const content = {
                 "config": {
                     "wide_screen_mode": true
@@ -244,7 +283,7 @@ async function createStoreTaskEntryStart(object_store_task, logger, client) {
                                 "tag": "button",
                                 "text": {
                                     "tag": "plain_text",
-                                    "content": "百度一下"
+                                    "content": "完成任务"
                                 },
                                 "url": url,
                                 "type": "primary"
@@ -255,7 +294,7 @@ async function createStoreTaskEntryStart(object_store_task, logger, client) {
                 "header": {
                     "template": "turquoise",
                     "title": {
-                        "content": "【任务发布】有一条" + name + "门店任务请尽快处理！",
+                        "content": "【任务发布】有一条" + object_store_task.name + "门店任务请尽快处理！",
                         "tag": "plain_text"
                     }
                 }
@@ -271,7 +310,10 @@ async function createStoreTaskEntryStart(object_store_task, logger, client) {
                 data.receive_id_type = "chat_id"
                 data.receive_id = feishuChat.chat_id
             } else {
-
+                //通过用户
+                let feishuPeople = await application.data.object("_user")
+                    .select("_id", "_department","_lark_user_id")
+                    .where({_id: object_store_task.task_handler._id || object_store_task.task_handler.id}).findOne();
                 // 判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
                 let object_task_def = await application.data.object("object_task_def")
                     .select("_id", "send_channel")
@@ -279,50 +321,16 @@ async function createStoreTaskEntryStart(object_store_task, logger, client) {
 
                 if (object_task_def.send_channel === "option_group") {
                     data.receive_id_type = "chat_id"
-
-                    //获取部门，通过用户
-                    let user = await application.data.object("_user")
-                        .select("_id", "_department")
-                        .where({_id: object_store_task.task_handler._id || object_store_task.task_handler.id}).findOne();
-
                     //通过部门ID获取飞书群ID
                     let object_feishu_chat = await application.data.object("object_feishu_chat")
                         .select("_id", "chat_id")
-                        .where({department: user._department._id || user._department.id}).findOne();
-
+                        .where({department: feishuPeople._department._id || feishuPeople._department.id}).findOne();
                     data.receive_id = object_feishu_chat.chat_id
                 } else {
-                    data.receive_id_type = "open_id"
-
-                    const feishuPeople = await application.data.object('_user')
-                        .select('_id', '_email', '_name')
-                        .where({_id: object_store_task.task_handler._id || object_store_task.task_handler.id}).findOne();
-
-                    try {
-
-                        //获取open_id
-                        const emails = [];
-                        emails.push(feishuPeople._email);
-
-                        const res = await client.contact.user.batchGetId({
-                            params: {user_id_type: "open_id"},
-                            data: {emails: emails}
-                        });
-
-                        const user = res.data.user_list.map(object_task_def => ({
-                            email: object_task_def.email,
-                            open_id: object_task_def.user_id
-                        }));
-
-                        data.receive_id = user[0].open_id;
-                        content.header.title.content = "【任务发布】" + feishuPeople._name.find(object_task_def => object_task_def.language_code === 2052).text + "有一条" + object_task_create_monitor.name + "门店任务请尽快处理！";
+                    data.receive_id_type = "user_id"
+                        data.receive_id = feishuPeople._lark_user_id;
+                        content.header.title.content = "【任务发布】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + object_store_task.name + "门店任务请尽快处理！";
                         data.content = JSON.stringify(content);
-
-                    } catch (error) {
-
-                        logger.error(`组装门店普通任务[${object_store_task._id}]发送消息卡片失败-->！`, error);
-
-                    }
                 }
             }
 
