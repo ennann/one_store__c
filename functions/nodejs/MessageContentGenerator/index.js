@@ -10,255 +10,273 @@ const { newLarkClient, createLimiter } = require('../utils');
  * @return 函数的返回数据
  */
 module.exports = async function (params, context, logger) {
-    // 日志功能
-    logger.info(`消息卡片内容生成函数 开始执行`, params);
-    // https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#45e0953e
-    // https://open.feishu.cn/document/server-docs/im-v1/message/create?appId=cli_a68809f3b7f9500d
+  // 日志功能
+  logger.info(`消息卡片内容生成函数 开始执行`, params);
+  // https://open.feishu.cn/document/server-docs/im-v1/message-content-description/create_json#45e0953e
+  // https://open.feishu.cn/document/server-docs/im-v1/message/create?appId=cli_a68809f3b7f9500d
 
-    const { record } = params;
+  const { record } = params;
 
-    const client = await newLarkClient({ userId: context.user._id }, logger);
+  const client = await newLarkClient({ userId: context.user._id }, logger);
 
-    // 获取图片image_key
-    const getImgKey = async (token) => {
-        const file = await application.resources.file.download(token);
-        try {
-            const imageKeyRes = await client.im.image.create({
-                data: {
-                    image_type: 'message',
-                    image: file,
-                },
-            });
-            logger.info({ imageKeyRes });
-            return imageKeyRes.image_key;
-        } catch (error) {
-            logger.error("上传图片失败", error);
-            throw new Error("上传图片失败", error);
-        }
-    };
-
-    // 获取多张图片image_key
-    const getImageKeys = async (images) => {
-        const limitUploadImg = createLimiter(getImgKey);
-        const imgUploadList = await Promise.all(images.map(item => limitUploadImg(item.token)));
-        return imgUploadList.filter(imgKey => !!imgKey);
-    };
-
-    // 图片类型根据图片数量返回消息数据
-    const getImgContent = async () => {
-        if (!record.images || record.images.length === 0) {
-            logger.error("消息定义没有图片");
-            return [];
-        }
-        const imageKeys = await getImageKeys(record.images);
-        logger.info({ imageKeys });
-        if (imageKeys.length === 1) {
-            return {
-                msg_type: "image",
-                content: JSON.stringify({ image_key: imageKeys[0] })
-            };
-        }
-        // 多张图片使用消息卡片模板类型
-        const columns = imageKeys.map(img_key => ({
-            tag: "column",
-            width: "weighted",
-            weight: 1,
-            elements: [
-                {
-                    img_key,
-                    tag: "img",
-                    mode: "fit_horizontal",
-                    preview: true,
-                    alt: {
-                        content: "",
-                        tag: "plain_text"
-                    },
-                }
-            ]
-        }));
-        const info = {
-            header: {
-                template: "turquoise",
-                title: {
-                    tag: "plain_text",
-                    content: record.message_title,
-                }
-            },
-            elements: [{
-                tag: "column_set",
-                background_style: "default",
-                horizontal_spacing: "default",
-                columns,
-                flex_mode: imageKeys.length === 1
-                    ? "none"
-                    : [2, 4].includes(imageKeys.length)
-                        ? "bisect"
-                        : "trisect",
-            }],
-        };
-        logger.info({ info });
-        return {
-            msg_type: "interactive",
-            content: JSON.stringify(info)
-        };
-    }
-
-    // 转换富文本-new
-    const formatRichText = async (htmlString, title) => {
-        const divs = [];
-        const formattedData = [];
-        let match;
-        const imgRegex = /<img[^>]*src="([^"]*)"[^>]*>/g;
-        const aRegex = /<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g;
-        const tagRegex = /<[^>]*>/g;
-        const divRegex = /<div[^>]*>(.*?)<\/div>/gs;
-
-        while ((match = divRegex.exec(htmlString)) !== null && !!match[1]) {
-            divs.push(match[1]);
-        }
-
-        for (const div of divs) {
-            const data = [];
-            let match;
-
-            while ((match = imgRegex.exec(div)) !== null) {
-                const srcMatch = div.match(/src="([^"]*)"/);
-                const urlParams = new URLSearchParams(srcMatch[1].split('?')[1]);
-                const token = urlParams.get('token');
-                const imgKeys = await getImageKeys([{ token }]);
-                data.push({ tag: 'img', image_key: imgKeys[0] });
-            }
-
-            if ((match = aRegex.exec(div)) !== null) {
-                data.push({ tag: 'a', href: match[1], text: match[2], style: getStyles(div) });
-            }
-
-            const textSegments = div.replace(imgRegex, '').replace(aRegex, '').split(tagRegex);
-            const textList = textSegments.filter(i => !!i);
-            if (textList.length === 1) {
-                const style = getStyles(div);
-                data.push({ tag: 'text', text: textList[0], style });
-            }
-            if (textList.length > 1) {
-                const matches = div.match(/<[^>]+>|[^<]+/g);
-                const list = mergeTags(matches);
-                list.forEach((text, index) => {
-                    data.push({ tag: 'text', text: textList[index], style: getStyles(text) });
-                });
-            }
-            data.length > 0 && formattedData.push(data);
-        }
-
-        logger.info({ formattedData });
-
-        return { zh_cn: { title, content: formattedData } };
-    };
-
-    // 获取消息内容
-    const getContent = async (type) => {
-        switch (type) {
-            // 富文本类型消息
-            case 'option_rich_text':
-                const postData = await formatRichText(record.message_richtext.raw, record.message_title);
-                return {
-                    msg_type: "post",
-                    content: JSON.stringify(postData)
-                };
-            // 视频类型消息直接发成文本类型
-            case 'option_video':
-                const textObj = { text: `${record.video_url} ${record.message_title ?? ''} ` };
-                return {
-                    msg_type: "text",
-                    content: JSON.stringify(textObj)
-                };
-            // 消息卡片模板类型消息
-            case 'option_card':
-                const data = {
-                    type: 'template',
-                    data: {
-                        template_id: record.message_template_id,
-                    }
-                };
-                return {
-                    msg_type: "interactive",
-                    content: JSON.stringify(data)
-                };
-            // 图片类型消息
-            default:
-                const res = await getImgContent();
-                return res;
-        };
-    }
-
+  // 获取图片image_key
+  const getImgKey = async (token) => {
+    const file = await application.resources.file.download(token);
     try {
-        if (!record.option_message_type) {
-            logger.error("缺少消息类型");
-            throw new Error("缺少消息类型");
-        }
-        const content = await getContent(record.option_message_type)
-        const receive_id_type = record.send_channel === "option_group" ? "chat_id" : "open_id";
-        logger.info({ content });
-        return {
-            ...content,
-            receive_id_type
-        };
+      const imageKeyRes = await client.im.image.create({
+        data: {
+          image_type: 'message',
+          image: file,
+        },
+      });
+      logger.info({ imageKeyRes });
+      return imageKeyRes.image_key;
     } catch (error) {
-        throw new Error("生成内容失败", error);
+      logger.error("上传图片失败", error);
+      throw new Error("上传图片失败", error);
     }
+  };
+
+  // 获取多张图片image_key
+  const getImageKeys = async (images) => {
+    const limitUploadImg = createLimiter(getImgKey);
+    const imgUploadList = await Promise.all(images.map(item => limitUploadImg(item.token)));
+    return imgUploadList.filter(imgKey => !!imgKey);
+  };
+
+  // 图片类型根据图片数量返回消息数据
+  const getImgContent = async () => {
+    if (!record.images || record.images.length === 0) {
+      logger.error("消息定义没有图片");
+      return [];
+    }
+    const imageKeys = await getImageKeys(record.images);
+    logger.info({ imageKeys });
+    if (imageKeys.length === 1) {
+      return {
+        msg_type: "image",
+        content: JSON.stringify({ image_key: imageKeys[0] })
+      };
+    }
+    // 多张图片使用消息卡片模板类型
+    const columns = imageKeys.map(img_key => ({
+      tag: "column",
+      width: "weighted",
+      weight: 1,
+      elements: [
+        {
+          img_key,
+          tag: "img",
+          mode: "fit_horizontal",
+          preview: true,
+          alt: {
+            content: "",
+            tag: "plain_text"
+          },
+        }
+      ]
+    }));
+    const info = {
+      header: {
+        template: "turquoise",
+        title: {
+          tag: "plain_text",
+          content: record.message_title,
+        }
+      },
+      elements: [{
+        tag: "column_set",
+        background_style: "default",
+        horizontal_spacing: "default",
+        columns,
+        flex_mode: imageKeys.length === 1
+          ? "none"
+          : [2, 4].includes(imageKeys.length)
+            ? "bisect"
+            : "trisect",
+      }],
+    };
+    logger.info({ info });
+    return {
+      msg_type: "interactive",
+      content: JSON.stringify(info)
+    };
+  }
+
+  // 转换富文本-new
+  const formatRichText = async (htmlString, title) => {
+    const divs = [];
+    const formattedData = [];
+    let match;
+    const imgRegex = /<img[^>]*src="([^"]*)"[^>]*>/g;
+    const aRegex = /<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g;
+    const tagRegex = /<[^>]*>/g;
+    const divRegex = /<div[^>]*>(.*?)<\/div>/gs;
+
+    while ((match = divRegex.exec(htmlString)) !== null && !!match[1]) {
+      divs.push(match[1]);
+    }
+
+    for (const div of divs) {
+      const data = [];
+      let match;
+
+      while ((match = imgRegex.exec(div)) !== null) {
+        const srcMatch = div.match(/src="([^"]*)"/);
+        const urlParams = new URLSearchParams(srcMatch[1].split('?')[1]);
+        const token = urlParams.get('token');
+        const imgKeys = await getImageKeys([{ token }]);
+        data.push({ tag: 'img', image_key: imgKeys[0] });
+      }
+
+      if ((match = aRegex.exec(div)) !== null) {
+          data.push({ tag: 'a', href: match[1], text: match[2], style: getStyles(div) });
+      }
+
+      // if (/<a/.test(div)) {
+      //   const hrefRegex = /href="([^"]*)"/;
+      //   const match = div.match(hrefRegex);
+      //   const _match = aRegex.exec(div)
+      //   data.push({ tag: 'a', href: match[1], text: _match[2], style: getStyles(div) });
+      // }
+
+      const textSegments = div.replace(imgRegex, '').split(tagRegex);
+      const textList = textSegments.filter(i => !!i);
+      if (textList.length === 1) {
+        const style = getStyles(div);
+        data.push({ tag: 'text', text: textList[0], style });
+      }
+      if (textList.length > 1) {
+        const matches = div.match(/<[^>]+>|[^<]+/g);
+        const list = mergeTags(matches);
+        logger.info({ matches, list });
+        list.forEach((text, index) => {
+          let item = { tag: 'text', text: textList[index], style: getStyles(text) }
+          if (/<a/.test(text)) {
+            const hrefRegex = /href="([^"]*)"/;
+            const match = text.match(hrefRegex);
+            item = {
+              ...item,
+              tag: "a",
+              href: match?.[1] ?? ''
+            }
+          }
+          data.push(item);
+        });
+      }
+      data.length > 0 && formattedData.push(data);
+    }
+
+    logger.info({ formattedData });
+
+    return { zh_cn: { title, content: formattedData } };
+  };
+
+  // 获取消息内容
+  const getContent = async (type) => {
+    switch (type) {
+      // 富文本类型消息
+      case 'option_rich_text':
+        const postData = await formatRichText(record.message_richtext.raw, record.message_title);
+        return {
+          msg_type: "post",
+          content: JSON.stringify(postData)
+        };
+      // 视频类型消息直接发成文本类型
+      case 'option_video':
+        const textObj = { text: `${record.video_url} ${record.message_title ?? ''} ` };
+        return {
+          msg_type: "text",
+          content: JSON.stringify(textObj)
+        };
+      // 消息卡片模板类型消息
+      case 'option_card':
+        const data = {
+          type: 'template',
+          data: {
+            template_id: record.message_template_id,
+          }
+        };
+        return {
+          msg_type: "interactive",
+          content: JSON.stringify(data)
+        };
+      // 图片类型消息
+      default:
+        const res = await getImgContent();
+        return res;
+    };
+  }
+
+  try {
+    if (!record.option_message_type) {
+      logger.error("缺少消息类型");
+      throw new Error("缺少消息类型");
+    }
+    const content = await getContent(record.option_message_type)
+    const receive_id_type = record.send_channel === "option_group" ? "chat_id" : "open_id";
+    logger.info({ content });
+    return {
+      ...content,
+      receive_id_type
+    };
+  } catch (error) {
+    throw new Error("生成内容失败", error);
+  }
 };
 
 
 function getStyles(text) {
-    const style = [];
-    if (/<u>/.test(text)) {
-        style.push("underline");
-    }
-    if (/<b>/.test(text)) {
-        style.push("bold");
-    }
-    if (/<i>/.test(text)) {
-        style.push("italic");
-    }
-    if (/<s>/.test(text)) {
-        style.push("lineThrough");
-    }
-    return style;
+  const style = [];
+  if (/<u>/.test(text)) {
+    style.push("underline");
+  }
+  if (/<b>/.test(text)) {
+    style.push("bold");
+  }
+  if (/<i>/.test(text)) {
+    style.push("italic");
+  }
+  if (/<s>/.test(text)) {
+    style.push("lineThrough");
+  }
+  return style;
 }
 
 function mergeTags(arr) {
-    let mergedArray = [];
-    let tempStr = '';
+  let mergedArray = [];
+  let tempStr = '';
 
-    for (let i = 0; i < arr.length; i++) {
-        if (arr[i].startsWith('<') && arr[i].endsWith('>')) {
-            // 如果是以标签开始的字符串，则将其添加到tempStr中
-            tempStr += arr[i];
-            if (arr[i].endsWith('</')) {
-                // 如果是以闭合标签结束的字符串，则将tempStr添加到mergedArray中，并重置tempStr
-                mergedArray.push(tempStr);
-                tempStr = '';
-            }
-        } else {
-            // 如果不是以标签开始的字符串，则直接添加到mergedArray中
-            if (tempStr) {
-                // 如果tempStr中有内容，说明前面有标签，将其添加到mergedArray中
-                mergedArray.push(tempStr);
-                tempStr = ''; // 重置tempStr
-            }
-            mergedArray.push(arr[i]);
-        }
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i].startsWith('<') && arr[i].endsWith('>')) {
+      // 如果是以标签开始的字符串，则将其添加到tempStr中
+      tempStr += arr[i];
+      if (arr[i].endsWith('</')) {
+        // 如果是以闭合标签结束的字符串，则将tempStr添加到mergedArray中，并重置tempStr
+        mergedArray.push(tempStr);
+        tempStr = '';
+      }
+    } else {
+      // 如果不是以标签开始的字符串，则直接添加到mergedArray中
+      if (tempStr) {
+        // 如果tempStr中有内容，说明前面有标签，将其添加到mergedArray中
+        mergedArray.push(tempStr);
+        tempStr = ''; // 重置tempStr
+      }
+      mergedArray.push(arr[i]);
     }
+  }
 
-    const list = mergedArray.reduce((pre, ele, index, arr) => {
-        if (/</.test(ele) || /<\/[^>]+>/.test(ele)) {
-            return pre;
-        }
-        if (/</.test(arr[index - 1]) && /<\/[^>]+>/.test(arr[index + 1])) {
-            return [...pre, arr[index - 1] + ele + arr[index + 1]];
-        }
-        return [...pre, ele];
-    }, []);
+  const list = mergedArray.reduce((pre, ele, index, arr) => {
+    if (/</.test(ele) || /<\/[^>]+>/.test(ele)) {
+      return pre;
+    }
+    if (/</.test(arr[index - 1]) && /<\/[^>]+>/.test(arr[index + 1])) {
+      return [...pre, arr[index - 1] + ele + arr[index + 1]];
+    }
+    return [...pre, ele];
+  }, []);
 
-    return list;
+  return list;
 }
 

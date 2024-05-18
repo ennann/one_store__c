@@ -96,7 +96,7 @@ module.exports = async function (params, context, logger) {
     userList.push(...users);
   }
 
-  userList = userList.filter((item, index, self) => self.findIndex(t => t.email === item.email) === index);
+  userList = userList.filter((item, index, self) => self.findIndex(t => t.email === item.email || t.mobile === item.mobile) === index);
   // userList = [...userList, { email: "huanghongzhi.4207@bytedance.com", _id: 1798564594579460 }];
   logger.info({ userList });
 
@@ -110,35 +110,38 @@ module.exports = async function (params, context, logger) {
   // 获取人员信息
   const getUserInfo = async (list) => {
     try {
-      const res = await client.contact.user.batchGetId({
-        params: { user_id_type: "open_id" },
-        data: {
-          emails: list.filter(i => !!i.email).map(i => i.email),
-          mobiles: list.filter(i => !!i.mobile).map(i => i.mobile)
-        }
-      })
+      // const res = await client.contact.user.batchGetId({
+      //   params: { user_id_type: "user_id" },
+      //   data: {
+      //     emails: list.filter(i => !!i.email).map(i => i.email),
+      //     mobiles: list.filter(i => !!i.mobile).map(i => i.mobile)
+      //   }
+      // })
+      let res = await application.data.object("_user")
+        .where({
+          _phoneNumber: application.operator.hasAnyOf(list.filter(i => !!i.mobile).map(i => i.mobile))
+        })
+        .select("_id", "_name", "_email", "_phoneNumber", "_lark_user_id")
+        .find();
       logger.info({ res });
-      if (res.code !== 0) {
-        logger.error("通过人员筛选条件获取人员失败");
-        return [];
-      }
-      return res.data.user_list
-        .filter(ele => !!ele.user_id)
-        .map(item => ({
-          email: item.email,
-          mobile: item.mobile,
-          open_id: item.user_id,
-          _id: list.find(i => i.email === item.email || i.mobile === item.mobile)._id
-        }))
+      // return res.data.user_list
+      //   .filter(ele => !!ele.user_id)
+      //   .map(item => ({
+      //     email: item.email,
+      //     mobile: item.mobile,
+      //     open_id: item.user_id,
+      //     _id: list.find(i => i.email === item.email || i.mobile === item.mobile)._id
+      //   }))
     } catch (error) {
       logger.error("通过人员筛选条件获取人员失败");
     }
   };
 
+  await getUserInfo(userList);
   // 将用户列表按照每个50的长度分成若干个数组
-  const chunks = chunkArray(userList, 50);
-  const limitGetUserInfo = createLimiter(getUserInfo);
-  const resList = await Promise.all(chunks.map(item => limitGetUserInfo(item)));
-  logger.info({ resList: resList.flat() });
-  return resList.flat();
+  // const chunks = chunkArray(userList, 50);
+  // const limitGetUserInfo = createLimiter(getUserInfo);
+  // const resList = await Promise.all(chunks.map(item => limitGetUserInfo(item)));
+  // logger.info({ resList: resList.flat() });
+  // return resList.flat();
 }

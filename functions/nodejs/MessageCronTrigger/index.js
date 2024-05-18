@@ -17,21 +17,13 @@ module.exports = async function (params, context, logger) {
     const timeBuffer = 1000 * 60 * 5; // 5 minutes buffer
     logger.info('当前时间->', currentDate, currentTime, dayjs(currentTime).format('YYYY-MM-DD HH:mm:ss'));
 
+    const messageDefineFields = await application.metadata.object("object_chat_message_def").getFields();
+    const fieldApiNames = messageDefineFields.map(item => item.apiName);
+
     // 查询所有的消息定义数据
     const messageDefineRecords = await application.data
         .object('object_chat_message_def')
-        .select(
-            '_id',
-            'title',
-            'option_method',
-            'option_time_cycle', // 天、周、月、季度、年
-            'repetition_rate', // 重复频次
-            'datetime_start', // 重复任务开始时间
-            'datetime_end', // 重复任务结束时间
-            'boolean_public_now',
-            'datetime_publish', // 发布时间
-            'option_status', // 等于 option_enable
-        )
+        .select(fieldApiNames)
         .where(
             _.or(
                 _.and({

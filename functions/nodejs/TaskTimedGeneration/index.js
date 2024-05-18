@@ -58,7 +58,7 @@ module.exports = async function (params, context, logger) {
     await kunlun.redis.del(taskBatchNumberCreateResult?.task_id);
 
     // 调用创建门店普通任务函数
-    const storeTaskCreateResults = await createStoreTaskEntry(task_def_record, taskBatchNumberCreateResult.object_task_create_monitor, logger, client,limitedSendFeishuMessage);
+    const storeTaskCreateResults = await createStoreTaskEntry(task_def_record, taskBatchNumberCreateResult.object_task_create_monitor, logger, client, limitedSendFeishuMessage);
     logger.info(`成功批量创建门店普通任务`, storeTaskCreateResults);
 
     return {
@@ -143,7 +143,7 @@ async function createTaskMonitorEntry(task, logger) {
  * @param {*} limitedSendFeishuMessage
  * @returns
  */
-async function createStoreTaskEntry(taskDef, task, logger, client,limitedSendFeishuMessage) {
+async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFeishuMessage) {
     // task 代表任务处理记录（任务批次）
     const createDataList = [];
     try {
@@ -410,38 +410,36 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
                     .where({_id: task.task_handler._id || task.task_handler.id})
                     .findOne();
                 // 判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
-
                 let object_task_def = await application.data
                     .object('object_task_def')
                     .select('_id', 'send_channel')
                     .where({_id: task.task_def._id || task.task_def.id})
                     .findOne();
-
-                // logger.info("发送到人员[object_task_def]----->",JSON.stringify(object_task_def,null,2));
                 if (object_task_def.send_channel === 'option_group') {
-                    // logger.info("通过群组发送----->");
                     data.receive_id_type = 'chat_id';
-                    // logger.info("通过用户获取部门----->",JSON.stringify(user,null,2));
                     //通过部门ID获取飞书群ID
                     let object_feishu_chat = await application.data
                         .object('object_feishu_chat')
                         .select('_id', 'chat_id')
                         .where({department: feishuPeople._department._id || feishuPeople._department.id})
                         .findOne();
-                    // logger.info("获取部门所在飞书群----->",JSON.stringify(object_feishu_chat,null,2));
+                    logger.info("获取部门所在飞书群----->",JSON.stringify(object_feishu_chat,null,2));
                     data.receive_id = object_feishu_chat.chat_id;
+                    logger.warn(`该用户[${feishuPeople._name}]的部门飞书群不存在`);
+                    return {
+                        code: 0,
+                        message: `创建门店普通任务成功&组装门店普通任务[${task._id}]发送消息卡片失败`,
+                        messageCardSendData: {}
+                    };
                 } else {
                     // logger.info("通过机器人发送----->");
                     data.receive_id_type = 'user_id';
-
                     data.receive_id = feishuPeople._lark_user_id;
                     content.header.title.content =
                         '【任务发布】' + feishuPeople._name.find(item => item.language_code === 2052).text + '有一条' + task.name + '门店任务请尽快处理！';
                     data.content = JSON.stringify(content);
-
                 }
             }
-            // logger.info("messageCardSendData--->",JSON.stringify(data,null,2));
             return {code: 0, message: '创建门店普通任务成功', messageCardSendData: data};
         } catch (error) {
             logger.error('messageCardSendData--->', JSON.stringify(data, null, 2));
@@ -509,10 +507,10 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
         }
         apassDataList.push({
             objectApiName: "object_task_def_copy",
-            data:apassData
+            data: apassData
         });
     }
-    return {code: 0, cardDataList: cardDataList,apassDataList:apassDataList};
+    return {code: 0, cardDataList: cardDataList, apassDataList: apassDataList};
 }
 
 /**
@@ -523,10 +521,10 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
 const sendFeishuMessage = async messageCardSendData => {
     try {
         await faas.function('MessageCardSend').invoke({
-            receive_id_type:messageCardSendData.receive_id_type,
-            receive_id:messageCardSendData.receive_id,
-            msg_type:messageCardSendData.msg_type,
-            content:messageCardSendData.content
+            receive_id_type: messageCardSendData.receive_id_type,
+            receive_id: messageCardSendData.receive_id,
+            msg_type: messageCardSendData.msg_type,
+            content: messageCardSendData.content
         });
         return {code: 0, message: `飞书消息发送成功`, result: 'success'};
     } catch (error) {
