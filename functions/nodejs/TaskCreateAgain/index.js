@@ -325,6 +325,14 @@ async function createStoreTaskEntryStart(object_task_def,object_store_task, logg
                     let object_feishu_chat = await application.data.object("object_feishu_chat")
                         .select("_id", "chat_id")
                         .where({department: feishuPeople._department._id || feishuPeople._department.id}).findOne();
+                    if (!object_feishu_chat){
+                        logger.warn(`该用户[${feishuPeople._id}]的部门飞书群不存在`);
+                        return {
+                            code: 0,
+                            message: `创建门店普通任务成功&组装门店普通任务[${object_store_task._id}]发送消息卡片失败`,
+                            messageCardSendData: {}
+                        };
+                    }
                     data.receive_id = object_feishu_chat.chat_id
                 } else {
                     data.receive_id_type = "user_id"

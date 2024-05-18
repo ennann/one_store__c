@@ -1,8 +1,6 @@
 // 通过 NPM dependencies 成功安装 NPM 包后此处可引入使用
 // 如安装 linq 包后就可以引入并使用这个包
 // const linq = require("linq");
-const { newLarkClient, createLimiter, chunkArray } = require('../utils');
-
 /**
  * @param {Params}  params     自定义参数
  * @param {Context} context    上下文参数，可通过此参数下钻获取上下文变量信息等
@@ -105,43 +103,33 @@ module.exports = async function (params, context, logger) {
     return [];
   }
 
-  const client = await newLarkClient({ userId: context.user._id }, logger);
-
   // 获取人员信息
-  const getUserInfo = async (list) => {
+  const getUserInfo = async (user) => {
     try {
-      // const res = await client.contact.user.batchGetId({
-      //   params: { user_id_type: "user_id" },
-      //   data: {
-      //     emails: list.filter(i => !!i.email).map(i => i.email),
-      //     mobiles: list.filter(i => !!i.mobile).map(i => i.mobile)
-      //   }
-      // })
-      let res = await application.data.object("_user")
-        .where({
-          _phoneNumber: application.operator.hasAnyOf(list.filter(i => !!i.mobile).map(i => i.mobile))
-        })
+      const query = user.mobile
+        ? { _phoneNumber: application.operator.contain(user.mobile) }
+        : { _email: application.operator.contain(user.email) };
+      const res = await application.data.object("_user")
         .select("_id", "_name", "_email", "_phoneNumber", "_lark_user_id")
-        .find();
-      logger.info({ res });
-      // return res.data.user_list
-      //   .filter(ele => !!ele.user_id)
-      //   .map(item => ({
-      //     email: item.email,
-      //     mobile: item.mobile,
-      //     open_id: item.user_id,
-      //     _id: list.find(i => i.email === item.email || i.mobile === item.mobile)._id
-      //   }))
+        .where(query)
+        .findOne();
+      return {
+        ...res,
+        user_id: res._lark_user_id
+      };
     } catch (error) {
       logger.error("通过人员筛选条件获取人员失败");
     }
   };
 
-  await getUserInfo(userList);
-  // 将用户列表按照每个50的长度分成若干个数组
-  // const chunks = chunkArray(userList, 50);
-  // const limitGetUserInfo = createLimiter(getUserInfo);
-  // const resList = await Promise.all(chunks.map(item => limitGetUserInfo(item)));
-  // logger.info({ resList: resList.flat() });
-  // return resList.flat();
+  try {
+    const list = userList.filter(item => !!item.email || !!item.mobile)
+      .map(item => getUserInfo(item));
+    const resList = await Promise.all(list);
+    logger.info(resList);
+    return resList;
+  } catch (error) {
+    logger.error("获取人员失败", error);
+    throw new Error("获取人员失败", error);
+  }
 }

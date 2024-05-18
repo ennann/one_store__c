@@ -23,7 +23,7 @@ module.exports = async function (params, context, logger) {
     throw new Error('已存在执行中发送消息任务');
   }
 
-  let receive_id_type = record.send_channel === 'option_group' ? 'chat_id' : 'open_id';
+  let receive_id_type = record.send_channel === 'option_group' ? 'chat_id' : 'user_id';
   let sendIds = [];
 
   let errorNum = 0;
@@ -94,7 +94,7 @@ module.exports = async function (params, context, logger) {
         throw new Error('缺少人员筛选规则');
       }
       const userList = await faas.function('DeployMemberRange').invoke({ user_rule: record.user_rule });
-      sendIds = userList.map(i => i.open_id);
+      sendIds = userList.map(i => i.user_id);
     }
 
     if (sendIds.length > 0) {

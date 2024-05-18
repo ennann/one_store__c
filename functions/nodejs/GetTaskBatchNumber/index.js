@@ -14,6 +14,7 @@ module.exports = async function (params, context, logger) {
     let response = {
         code: 0,
         batch_no: "",
+        batch_progress: "",
         message: "获取成功"
     };
 
@@ -35,12 +36,15 @@ module.exports = async function (params, context, logger) {
             .select('_id', 'batch_no')
             .where({task_def: {_id: object_task_def._id}})
             .find();
+        const size = object_task_create_monitors.length + 1;
         let object_task_def_query = await application.data.object('object_task_def')
             .select('_id', 'task_number')
             .where({_id: object_task_def._id})
             .findOne();
-        const newBatchNo = `${(object_task_create_monitors.length + 1).toString().padStart(6, '0')}`;
+        const newBatchNo = `${(size).toString().padStart(6, '0')}`;
         response.batch_no = object_task_def_query.task_number + '-' + newBatchNo;
+        // todo 获取当前定义的总批次
+        response.batch_progress = size + '/' + size;
     } catch (error) {
         logger.error(`数据库操作失败: ${error}`);
         response.code = -1;

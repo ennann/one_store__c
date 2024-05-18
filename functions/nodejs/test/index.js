@@ -12,17 +12,28 @@ module.exports = async function (params, context, logger) {
   // 日志功能
 
 
-  const messageDefineFields = await application.metadata.object("object_chat_message_def").getFields();
-  // logger.info(`fields: ${JSON.stringify(fields, null, 4)}`);
-  const fieldApiNames = fields.map(item => item.apiName);
-  // logger.info(fieldApiNames);
+  // const messageDefineFields = await application.metadata.object("object_chat_message_def").getFields();
+  // // logger.info(`fields: ${JSON.stringify(fields, null, 4)}`);
+  // const fieldApiNames = messageDefineFields.map(item => item.apiName);
+  // // logger.info(fieldApiNames);
 
 
+  [
+    {
+      email: "wangshujian@bytedance.com"
+    }
+  ]
+
+
+   
+  query = {}
   let user_records = await application.data.object("_user")
-    .select("_id", "_name", "_email", "_phoneNumber")
-    .where({ _phoneNumber:  application.operator.contain(['17624863927'])})
+    .select("_id", "_name", "_email", "_phoneNumber", "_lark_user_id")
+    .where(query)
     .find();
+  
   console.info(user_records);
+
 
   return
 

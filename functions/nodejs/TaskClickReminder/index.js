@@ -137,7 +137,7 @@ module.exports = async function (params, context, logger) {
                 taskCount++;
             } else {
                 const feishuPeople = await application.data.object('_user')
-                    .select('_id', "_department", "_lark_user_id")
+                    .select('_id',"_name", "_department", "_lark_user_id")
                     .where({_id: item.task_handler._id}).findOne();
                 //判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
                 if (task_def_record.send_channel === "option_group") {
@@ -145,9 +145,13 @@ module.exports = async function (params, context, logger) {
                     let object_feishu_chat = await application.data.object("object_feishu_chat")
                         .select("_id", "chat_id")
                         .where({department: feishuPeople._department._id}).findOne();
-                    data.receive_id = object_feishu_chat.chat_id
-                    messageCardSendDatas.push(data);
-                    userCount++;
+                    if (object_feishu_chat){
+                        data.receive_id = object_feishu_chat.chat_id
+                        messageCardSendDatas.push(data);
+                        userCount++;
+                    }else{
+                        logger.warn(`该用户[${feishuPeople._id}]的部门飞书群不存在`)
+                    }
                 } else {
                     data.receive_id_type = "user_id"
                     data.receive_id = feishuPeople._lark_user_id;

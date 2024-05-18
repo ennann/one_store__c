@@ -424,13 +424,16 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
                         .where({department: feishuPeople._department._id || feishuPeople._department.id})
                         .findOne();
                     logger.info("获取部门所在飞书群----->",JSON.stringify(object_feishu_chat,null,2));
+                    if (!object_feishu_chat){
+                        logger.warn(`该用户[${feishuPeople._id}]的部门飞书群不存在`);
+                        return {
+                            code: 0,
+                            message: `创建门店普通任务成功&组装门店普通任务[${task._id}]发送消息卡片失败`,
+                            messageCardSendData: {}
+                        };
+                    }
                     data.receive_id = object_feishu_chat.chat_id;
-                    logger.warn(`该用户[${feishuPeople._name}]的部门飞书群不存在`);
-                    return {
-                        code: 0,
-                        message: `创建门店普通任务成功&组装门店普通任务[${task._id}]发送消息卡片失败`,
-                        messageCardSendData: {}
-                    };
+
                 } else {
                     // logger.info("通过机器人发送----->");
                     data.receive_id_type = 'user_id';
