@@ -96,7 +96,7 @@ module.exports = async function (params, context, logger) {
     userList.push(...users);
   }
 
-  userList = userList.filter((item, index, self) => self.findIndex(t => t.email === item.email) === index);
+  userList = userList.filter((item, index, self) => self.findIndex(t => t.email === item.email || t.mobile === item.mobile) === index);
   // userList = [...userList, { email: "huanghongzhi.4207@bytedance.com", _id: 1798564594579460 }];
   logger.info({ userList });
 

@@ -1,0 +1,18 @@
+{
+    "apiID": "one_store__c__function_aadgihy75dqhy",
+    "apiName": "TaskTimedWarn",
+    "label": {
+      "zh_CN": "【任务】任务到期前提醒",
+      "en_US": "Task Warn Before Due"
+    },
+    "description": {
+      "zh_CN": "任务定期提醒，获取一个小时内的普通门店管理记录中设置提醒的记录，发送飞书卡片消息",
+      "en_US": "Task regular reminder, get the records set to remind in the normal store management records within one hour, and send a Feishu card message"
+    },
+    "isPublicAPI": false,
+    "frontendSDKInvokable": false,
+    "longTaskMode": false,
+    "input": [],
+    "output": []
+  }
+  

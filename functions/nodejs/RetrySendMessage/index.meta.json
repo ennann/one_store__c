@@ -1,6 +1,6 @@
 {
   "apiID": "one_store__c__function_aadgix7pynakw",
-  "apiName": "RetrySendMessage",
+  "apiName": "MessageRetrySend",
   "label": {
     "zh_CN": "发送消息-重试",
     "en_US": ""

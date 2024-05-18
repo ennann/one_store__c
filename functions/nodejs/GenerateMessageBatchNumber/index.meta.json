@@ -1,6 +1,6 @@
 {
   "apiID": "one_store__c__function_aadgi3iki5ocw",
-  "apiName": "GenerateMessageBatchNumber",
+  "apiName": "MessageGenerateBatchNumber",
   "label": {
     "zh_CN": "生成消息记录批次号",
     "en_US": ""

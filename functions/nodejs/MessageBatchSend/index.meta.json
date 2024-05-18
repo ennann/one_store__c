@@ -1,0 +1,25 @@
+{
+  "apiID": "one_store__c__function_aadgi3xkbh6cs",
+  "apiName": "MessageBatchSend",
+  "label": {
+    "zh_CN": "批量发送消息",
+    "en_US": "Message Batch Send"
+  },
+  "description": {
+    "zh_CN": "发送消息单一功能函数，接受消息发送接口参数信息",
+    "en_US": "Send message single function, accept message send interface parameter information"
+  },
+  "longTaskMode": false,
+  "frontendSDKInvokable": false,
+  "input": [
+    {
+      "key": "record",
+      "type": "Record",
+      "label": "消息定义",
+      "required": true,
+      "description": "",
+      "objectApiName": "object_chat_message_def"
+    }
+  ],
+  "output": []
+}

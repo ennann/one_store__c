@@ -16,7 +16,7 @@ module.exports = async function (params, context, logger) {
 
     const {object_task_create_monitor} = params;
     if (!object_task_create_monitor) {
-        logger.warn("未传入任务处理记录")
+        logger.error("未传入任务处理记录")
         return {code: false, message: "未传入任务处理记录"}
     }
     let client = await newLarkClient({userId: context.user._id}, logger);
@@ -32,128 +32,137 @@ module.exports = async function (params, context, logger) {
     let messageCardSendDatas = []
     let taskCount = 0;
     let userCount = 0;
+    //查询任务定义
+    const task_def_record = await application.data.object("object_task_def")
+        .select("_id", "option_upload_image", "option_input_information", "option_upload_attachement", "send_channel")
+        .where({_id: object_task_create_monitor.task_def._id}).findOne();
+    if (!task_def_record) {
+        logger.error("该任务批次的任务定义数据不存在")
+        return {code: false, message: "该任务批次的任务定义不存在"}
+    }
+    if (object_store_tasks.length > 0) {
+        for (const item of object_store_tasks) {
 
-    for (const item of object_store_tasks) {
-        let priority = await faas.function("GetOptionName").invoke({
-            table_name: "object_store_task",
-            option_type: "option_priority",
-            option_api: item.option_priority
-        });
-        let url = await application.globalVar.getVar("task_click_url");
-        const content = {
-            "config": {
-                "wide_screen_mode": true
-            },
-            "elements": [
-                {
-                    "tag": "div",
-                    "text": {
-                        "content": "任务优先级：" + priority.option_name,
-                        "tag": "plain_text"
-                    }
+            //任务名称
+            const object_store_tasks_name = item.name;
+
+            let priority = await faas.function("GetOptionName").invoke({
+                table_name: "object_store_task",
+                option_type: "option_priority",
+                option_api: item.option_priority
+            });
+            let url = "";
+            //判断执行流程的url
+            if (task_def_record.option_upload_image === "option_yes" ||
+                task_def_record.option_input_information === "option_yes" ||
+                task_def_record.option_upload_attachement === "option_yes") {
+                url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&objectApiName2RecordIds%5Bone_store__c__object_aadgfx2qchmdi%5D%5B0%5D=${item._id}&1=1&version=v2&actionApiName=automation_0e8567ea5a4&namespace=one_store__c&recordID=`;
+            } else {
+                url = `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&variables%5B0%5D%5BvarApiName%5D=customizeInput__original__717a10b5&variables%5B0%5D%5BinputValue%5D=${item._id}&1=1&actionApiName=automation_952bc370750&namespace=one_store__c&recordID=&version=v2`;
+            }
+            const content = {
+                "config": {
+                    "wide_screen_mode": true
                 },
-                {
-                    "tag": "div",
-                    "text": {
-                        "content": "任务来源：" + item.source_department.name,
-                        "tag": "plain_text"
-                    }
-                },
-                {
-                    "tag": "div",
-                    "text": {
-                        "content": "任务下发时间：" + dayjs(item.task_create_time).format('YYYY-MM-DD HH:mm:ss'),
-                        "tag": "plain_text"
-                    }
-                },
-                {
-                    "tag": "div",
-                    "text": {
-                        "content": "距离截至时间还有" + Number.parseFloat(item.deadline_time).toFixed(2) + "小时",
-                        "tag": "plain_text"
-                    }
-                },
-                {
-                    "tag": "hr"
-                },
-                {
-                    "tag": "action",
-                    "actions": [
-                        {
-                            "tag": "button",
-                            "text": {
-                                "tag": "plain_text",
-                                "content": "百度一下"
-                            },
-                            "url": url,
-                            "type": "primary"
+                "elements": [
+                    {
+                        "tag": "div",
+                        "text": {
+                            "content": "任务优先级：" + priority.option_name,
+                            "tag": "plain_text"
                         }
-                    ]
-                }
-            ],
-            "header": {
-                "template": "turquoise",
-                "title": {
-                    "content": "【催办消息】有一条" + item.name + "门店任务请尽快处理！",
-                    "tag": "plain_text"
+                    },
+                    {
+                        "tag": "div",
+                        "text": {
+                            "content": "任务来源：" + item.source_department._name,
+                            "tag": "plain_text"
+                        }
+                    },
+                    {
+                        "tag": "div",
+                        "text": {
+                            "content": "任务下发时间：" + dayjs(item.task_create_time).format('YYYY-MM-DD HH:mm:ss'),
+                            "tag": "plain_text"
+                        }
+                    },
+                    {
+                        "tag": "div",
+                        "text": {
+                            "content": "距离截至时间还有" + Number.parseFloat(item.deadline_time).toFixed(2) + "小时",
+                            "tag": "plain_text"
+                        }
+                    },
+                    {
+                        "tag": "hr"
+                    },
+                    {
+                        "tag": "action",
+                        "actions": [
+                            {
+                                "tag": "button",
+                                "text": {
+                                    "tag": "plain_text",
+                                    "content": "完成任务"
+                                },
+                                "url": url,
+                                "type": "primary"
+                            }
+                        ]
+                    }
+                ],
+                "header": {
+                    "template": "turquoise",
+                    "title": {
+                        "content": "【催办消息】有一条" + object_store_tasks_name + "门店任务请尽快处理！",
+                        "tag": "plain_text"
+                    }
                 }
             }
-        }
-        let json = JSON.stringify(content);
-        const data = {
-            receive_id_type: "", //接收方类型：open_id/user_id/union_id/email/chat_id text
-            msg_type: "interactive", //消息类型：text、post、image、file、audio、media、sticker、interactive、share_chat、share_user text
-            receive_id: "", //接收方ID text
-            content: json, //消息卡片内容  JSON
-        }
-        if (item.task_chat) {
-            //获取群组ID
-            const feishuChat = await application.data.object('object_feishu_chat')
-                .select('_id', 'chat_id')
-                .where({_id: item.task_chat._id}).findOne();
-            data.receive_id_type = "chat_id"
-            data.receive_id = feishuChat.chat_id
-            messageCardSendDatas.push(data);
-            taskCount++;
-        } else {
-            const feishuPeople = await application.data.object('_user')
-                .select('_id', '_email', '_department')
-                .where({_id: item.task_handler._id}).findOne();
-            //判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
-            let object_task_def = await application.data.object("object_task_def")
-                .select("_id", "send_channel")
-                .where({_id: item.task_def._id || item.task_def.id}).findOne();
-            if (object_task_def.send_channel === "option_group") {
+            let json = JSON.stringify(content);
+            const data = {
+                receive_id_type: "", //接收方类型：open_id/user_id/union_id/email/chat_id text
+                msg_type: "interactive", //消息类型：text、post、image、file、audio、media、sticker、interactive、share_chat、share_user text
+                receive_id: "", //接收方ID text
+                content: json, //消息卡片内容  JSON
+            }
+            if (item.task_chat) {
+                //获取群组ID
+                const feishuChat = await application.data.object('object_feishu_chat')
+                    .select('_id', 'chat_id')
+                    .where({_id: item.task_chat._id}).findOne();
                 data.receive_id_type = "chat_id"
-                let object_feishu_chat = await application.data.object("object_feishu_chat")
-                    .select("_id", "chat_id")
-                    .where({department: feishuPeople._department._id}).findOne();
-                data.receive_id = object_feishu_chat.chat_id
+                data.receive_id = feishuChat.chat_id
                 messageCardSendDatas.push(data);
-                userCount++;
+                taskCount++;
             } else {
-                data.receive_id_type = "open_id"
-                try {
-                    const emails = [];
-                    emails.push(feishuPeople._email);
-                    //获取open_id
-                    const res = await client.contact.user.batchGetId({
-                        params: {user_id_type: "open_id"},
-                        data: {emails: emails}
-                    });
-                    const user = res.data.user_list.map(item => ({
-                        email: item.email,
-                        open_id: item.user_id
-                    }));
-                    data.receive_id = user[0].open_id;
-                    content.header.title.content = "【催办消息】" + item.task_handler._name + "有一条" + item.name + "门店任务请尽快处理！";
+                const feishuPeople = await application.data.object('_user')
+                    .select('_id', "_department", "_lark_user_id")
+                    .where({_id: item.task_handler._id}).findOne();
+                //判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
+                if (task_def_record.send_channel === "option_group") {
+                    data.receive_id_type = "chat_id"
+                    let object_feishu_chat = await application.data.object("object_feishu_chat")
+                        .select("_id", "chat_id")
+                        .where({department: feishuPeople._department._id}).findOne();
+                    data.receive_id = object_feishu_chat.chat_id
+                    messageCardSendDatas.push(data);
+                    userCount++;
+                } else {
+                    data.receive_id_type = "user_id"
+                    data.receive_id = feishuPeople._lark_user_id;
+                    content.header.title.content = "【催办消息】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + object_store_tasks_name + "门店任务请尽快处理！";
                     data.content = JSON.stringify(content);
                     messageCardSendDatas.push(data);
                     userCount++;
-                } catch (error) {
-                    logger.error(`[${feishuPeople._id}]用户邮箱为null！`, error);
                 }
             }
+        }
+    }else{
+        logger.error("根据任务批次查询门店普通任务为0");
+        return {
+            code: false,
+            message: `根据任务批次查询门店普通任务为0`
         }
     }
     logger.info("messageCardSendDatas->", messageCardSendDatas);
