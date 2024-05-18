@@ -119,7 +119,6 @@ module.exports = async function (params, context, logger) {
 
     for (const div of divs) {
       const data = [];
-      let match;
 
       while ((match = imgRegex.exec(div)) !== null) {
         const srcMatch = div.match(/src="([^"]*)"/);
@@ -129,16 +128,15 @@ module.exports = async function (params, context, logger) {
         data.push({ tag: 'img', image_key: imgKeys[0] });
       }
 
-      if ((match = aRegex.exec(div)) !== null) {
-          data.push({ tag: 'a', href: match[1], text: match[2], style: getStyles(div) });
+      if (/<a/.test(div)) {
+        const hrefRegex = /href="([^"]*)"/;
+        const match = div.match(hrefRegex);
+        const _match = aRegex.exec(div)
+        if (_match) {
+          logger.info({ _match })
+          data.push({ tag: 'a', href: match[1], text: _match[2], style: getStyles(div) });
+        }
       }
-
-      // if (/<a/.test(div)) {
-      //   const hrefRegex = /href="([^"]*)"/;
-      //   const match = div.match(hrefRegex);
-      //   const _match = aRegex.exec(div)
-      //   data.push({ tag: 'a', href: match[1], text: _match[2], style: getStyles(div) });
-      // }
 
       const textSegments = div.replace(imgRegex, '').split(tagRegex);
       const textList = textSegments.filter(i => !!i);
