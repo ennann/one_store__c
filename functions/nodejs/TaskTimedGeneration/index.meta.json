@@ -1,0 +1,26 @@
+{
+  "apiID": "one_store__c__function_aadghx6fh4ady",
+  "apiName": "TaskTimedGeneration",
+  "label": {
+    "zh_CN": "批量创建aPaaS任务",
+    "en_US": "Batch Create aPaaS Task"
+  },
+  "description": {
+    "zh_CN": "根据任务定义列表，创建任务定义相关的任务批次和任务记录",
+    "en_US": "Create task batches and task records related to task definitions based on the task definition list."
+  },
+  "isPublicAPI": false,
+  "frontendSDKInvokable": false,
+  "longTaskMode": false,
+  "input": [
+    {
+      "key": "task_def_record",
+      "type": "Record",
+      "required": true,
+      "label": "任务定义记录",
+      "description": "",
+      "objectApiName": "object_task_def"
+    }
+  ],
+  "output": []
+}
