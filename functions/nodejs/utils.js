@@ -352,6 +352,26 @@ const chunkArray = (array, chunkSize = 200) => {
   return chunks;
 };
 
+/**
+ * @description 根据userId获取用户手机号
+ * @param {@} client 
+ * @param {*} user_id 
+ */
+ async function fetchUserMobilePhoneById(user_id) {
+  const { appId } = await application.integration.getDefaultTenantAccessToken();
+
+  const client = new lark.Client({ appId, appSecret: 'fake' });
+  
+  let response = await client.contact.user.get({
+    path: { user_id },
+    params:{
+      user_id_type: 'user_id'
+    },
+  });
+
+  return response.data.user.mobile;
+}
+
 module.exports = {
   newLarkClient,
   createLimiter,
@@ -364,5 +384,6 @@ module.exports = {
   batchOperation,
   fetchEmailsByUserId,
   fetchDepartmentInfoById,
-  chunkArray
+  chunkArray,
+  fetchUserMobilePhoneById
 };

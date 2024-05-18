@@ -151,13 +151,16 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
         //任务截止时间
         let task_plan_time = dayjs(task.task_create_time).add(item.deal_duration, 'day').valueOf();
         logger.info(`任务处理记录（任务批次）[${task._id}]对应的任务定义详情->`, JSON.stringify(task, null, 2));
+        //获取部门详情
+        let department_record = await application.data.object('_department').select('_id', "_name").where({_id: item.publish_department.id}).findOne();
+        logger.info(`获取部门详情->`, JSON.stringify(department_record, null, 2));
         //飞书群
         if (item.option_handler_type === 'option_01') {
             //群组赛选规则
             const chatRecordList = await faas.function('DeployChatRange').invoke({deploy_rule: item.chat_rule});
             logger.info(`群组筛选规则[${item.chat_rule._id}]返回群数量->`, chatRecordList.length);
             logger.info(`群组筛选规则[${item.chat_rule._id}]返回群详情->`, JSON.stringify(chatRecordList, null, 2));
-            for (const chatRecordListElement of chatRecordList) {
+           for (const chatRecordListElement of chatRecordList) {
                 const createData = {
                     name: item.name,
                     description: item.description,
@@ -173,7 +176,7 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
                     option_upload_attachementdd: item.option_upload_attachement, //任务要求上传附件
                     set_warning_time: item.set_warning_time, //是否设置任务到期前提醒
                     warning_time: item.warning_time, //预警时间（小时）
-                    source_department: {_id: item.publish_department._id, name: item.publish_department.name}, //任务来源
+                    source_department: {_id: department_record._id, name: department_record._name}, //任务来源
                     option_priority: item.option_priority, //优先级
                 };
                 //为任务处理记录（任务批次）创建门店普通任务
@@ -203,7 +206,7 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
                     option_upload_attachementdd: item.option_upload_attachement, //任务要求上传附件
                     set_warning_time: item.set_warning_time, //是否设置任务到期前提醒
                     warning_time: item.warning_time, //预警时间（小时）
-                    source_department: {_id: item.publish_department._id, name: item.publish_department.name}, //任务来源
+                    source_department: {_id: department_record._id, name: department_record._name}, //任务来源
                     option_priority: item.option_priority, //优先级
                 };
                 //为任务处理记录（任务批次）创建门店普通任务

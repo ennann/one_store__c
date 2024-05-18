@@ -29,7 +29,6 @@ module.exports = async function (params, context, logger) {
           image: file,
         },
       });
-      logger.info({ imageKeyRes });
       return imageKeyRes.image_key;
     } catch (error) {
       logger.error("上传图片失败", error);
@@ -51,7 +50,6 @@ module.exports = async function (params, context, logger) {
       return [];
     }
     const imageKeys = await getImageKeys(record.images);
-    logger.info({ imageKeys });
     if (imageKeys.length === 1) {
       return {
         msg_type: "image",
@@ -59,24 +57,9 @@ module.exports = async function (params, context, logger) {
       };
     }
     // 多张图片使用消息卡片模板类型
-    const columns = imageKeys.map(img_key => ({
-      tag: "column",
-      width: "weighted",
-      weight: 1,
-      elements: [
-        {
-          img_key,
-          tag: "img",
-          mode: "fit_horizontal",
-          preview: true,
-          alt: {
-            content: "",
-            tag: "plain_text"
-          },
-        }
-      ]
-    }));
+    const elements = getCardImgElement(imageKeys);
     const info = {
+      elements,
       header: {
         template: "turquoise",
         title: {
@@ -84,17 +67,6 @@ module.exports = async function (params, context, logger) {
           content: record.message_title,
         }
       },
-      elements: [{
-        tag: "column_set",
-        background_style: "default",
-        horizontal_spacing: "default",
-        columns,
-        flex_mode: imageKeys.length === 1
-          ? "none"
-          : [2, 4].includes(imageKeys.length)
-            ? "bisect"
-            : "trisect",
-      }],
     };
     logger.info({ info });
     return {
@@ -103,71 +75,82 @@ module.exports = async function (params, context, logger) {
     };
   }
 
-  // 转换富文本-new
-  const formatRichText = async (htmlString, title) => {
+  // 转换富文本-飞书卡片类型
+  const formatRichToCard = async (htmlString, title) => {
     const divs = [];
     const formattedData = [];
     let match;
     const imgRegex = /<img[^>]*src="([^"]*)"[^>]*>/g;
-    const aRegex = /<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/g;
     const tagRegex = /<[^>]*>/g;
     const divRegex = /<div[^>]*>(.*?)<\/div>/gs;
+    const hrefRegex = /href="([^"]*)"/;
 
     while ((match = divRegex.exec(htmlString)) !== null && !!match[1]) {
       divs.push(match[1]);
     }
 
-    for (const div of divs) {
-      const data = [];
+    logger.info({ divs })
 
+    for (const div of divs) {
+      let data = [];
+      const imgs = [];
+
+      // 图片
       while ((match = imgRegex.exec(div)) !== null) {
         const srcMatch = div.match(/src="([^"]*)"/);
         const urlParams = new URLSearchParams(srcMatch[1].split('?')[1]);
         const token = urlParams.get('token');
-        const imgKeys = await getImageKeys([{ token }]);
-        data.push({ tag: 'img', image_key: imgKeys[0] });
+        imgs.push({ token });
+        const imgKeys = await getImageKeys(imgs);
+        const imgElement = getCardImgElement(imgKeys);
+        formattedData.push(imgElement);
       }
 
-      if (/<a/.test(div)) {
-        const hrefRegex = /href="([^"]*)"/;
-        const match = div.match(hrefRegex);
-        const _match = aRegex.exec(div)
-        if (_match) {
-          logger.info({ _match })
-          data.push({ tag: 'a', href: match[1], text: _match[2], style: getStyles(div) });
+      logger.info({ div });
+      formattedData.push({
+        tag: "div",
+        text: {
+          tag: "lark_md",
+          content: div
         }
-      }
-
-      const textSegments = div.replace(imgRegex, '').split(tagRegex);
-      const textList = textSegments.filter(i => !!i);
-      if (textList.length === 1) {
-        const style = getStyles(div);
-        data.push({ tag: 'text', text: textList[0], style });
-      }
-      if (textList.length > 1) {
-        const matches = div.match(/<[^>]+>|[^<]+/g);
-        const list = mergeTags(matches);
-        logger.info({ matches, list });
-        list.forEach((text, index) => {
-          let item = { tag: 'text', text: textList[index], style: getStyles(text) }
-          if (/<a/.test(text)) {
-            const hrefRegex = /href="([^"]*)"/;
-            const match = text.match(hrefRegex);
-            item = {
-              ...item,
-              tag: "a",
-              href: match?.[1] ?? ''
-            }
-          }
-          data.push(item);
-        });
-      }
-      data.length > 0 && formattedData.push(data);
+      })
+      // const textSegments = div.replace(imgRegex, '').split(tagRegex);
+      // const textList = textSegments.filter(i => !!i);
+      // if (textList.length === 1) {
+      //   let _item = { tag: 'text', text: textList[0], style: getStyles(div) }
+      //   if (/<a/.test(div)) {
+      //     const aMatch = div.match(hrefRegex);
+      //     _item = {
+      //       ..._item,
+      //       tag: "a",
+      //       href: aMatch?.[1] ?? ''
+      //     }
+      //   }
+      //   data.push(_item);
+      // }
+      // if (textList.length > 1) {
+      //   const matches = div.match(/<[^>]+>|[^<]+/g);
+      //   const list = mergeTags(matches);
+      //   list.forEach((text, index) => {
+      //     let item = { tag: 'text', text: textList[index], style: getStyles(text) };
+      //     if (/<a/.test(text)) {
+      //       const match = text.match(hrefRegex);
+      //       item = {
+      //         ...item,
+      //         tag: "a",
+      //         href: match?.[1] ?? ''
+      //       }
+      //     }
+      //     data.push(item);
+      //   });
+      // }
+      // data.length > 0 && formattedData.push(data);
     }
-
     logger.info({ formattedData });
-
-    return { zh_cn: { title, content: formattedData } };
+    return {
+      msg_type: "interactive",
+      content: JSON.stringify(formattedData)
+    };
   };
 
   // 获取消息内容
@@ -175,14 +158,17 @@ module.exports = async function (params, context, logger) {
     switch (type) {
       // 富文本类型消息
       case 'option_rich_text':
-        const postData = await formatRichText(record.message_richtext.raw, record.message_title);
+        const postData = await formatRichToCard(record.message_richtext.raw, record.message_title);
         return {
           msg_type: "post",
           content: JSON.stringify(postData)
         };
       // 视频类型消息直接发成文本类型
       case 'option_video':
-        const textObj = { text: `${record.video_url} ${record.message_title ?? ''} ` };
+        const textObj = {
+          text: `${record.video_url} 
+                 ${record.message_title ?? ''}`
+        }
         return {
           msg_type: "text",
           content: JSON.stringify(textObj)
@@ -223,6 +209,40 @@ module.exports = async function (params, context, logger) {
   }
 };
 
+// 获取飞书卡片的图片布局信息
+const getCardImgElement = (imageKeys) => {
+  // 多张图片使用消息卡片模板类型
+  const columns = imageKeys.map(img_key => ({
+    tag: "column",
+    width: "weighted",
+    weight: 1,
+    elements: [
+      {
+        img_key,
+        tag: "img",
+        mode: "fit_horizontal",
+        preview: true,
+        alt: {
+          content: "",
+          tag: "plain_text"
+        },
+      }
+    ]
+  }));
+  const elements = [{
+    tag: "column_set",
+    background_style: "default",
+    horizontal_spacing: "default",
+    columns,
+    flex_mode: imageKeys.length === 1
+      ? "none"
+      : [2, 4].includes(imageKeys.length)
+        ? "bisect"
+        : "trisect",
+  }];
+
+  return elements;
+};
 
 function getStyles(text) {
   const style = [];

@@ -1,4 +1,4 @@
-const { newLarkClient, createLimiter, fetchEmailsByUserId, batchOperation } = require('../utils');
+const { newLarkClient, createLimiter, fetchEmailsByUserId, batchOperation,fetchUserMobilePhoneById } = require('../utils');
 
 /**
  * @param {Params}  params     Custom parameters
@@ -183,29 +183,48 @@ async function updateUserGroupMember(feishuUserGroup, logger) {
     const updateGroupMember = async group => {
         try {
             const { _id, member_list } = group;
+            // 获取飞书平台的用户id值
             let user_id_list = member_list.map(member => member.member_id);
 
             if (user_id_list.length === 0) {
                 logger.info('No user IDs available, skipping operations for', _id);
                 return;
             }
+            // 根据飞书userId值获取用户邮箱  ----> 原逻辑
+            // let user_email_list = await fetchEmailsByUserId(user_id_list);
 
-            let user_email_list = await fetchEmailsByUserId(user_id_list);
+            // if (user_email_list.length === 0) {
+            //     logger.info('No user emails found, skipping database operations for', _id);
+            //     return;
+            // }
+            // 根据用户的邮箱查询相应的apaas的用户信息
+            // const apaas_user_records = [];
+            // await application.data
+            //     .object('_user')
+            //     .select(['_email', '_id'])
+            //     .where({ _email: application.operator.in(user_email_list) })
+            //     .findStream(records => {
+            //         apaas_user_records.push(...records);
+            //     });
+            // logger.info('apaas_user_records', apaas_user_records.length);
 
-            if (user_email_list.length === 0) {
-                logger.info('No user emails found, skipping database operations for', _id);
-                return;
-            }
-
+            //-------------------------------------------------  新逻辑
+            // 使用for循环 通过id值获取用户信息
             const apaas_user_records = [];
-            await application.data
+            for (const element of user_id_list) {
+                // 获取用户的手机号
+                let user_phone_number = await fetchUserMobilePhoneById(element);
+                let phone_number_without_prefix = user_phone_number.substring(3);
+                // // 根据用户的手机号查询相应的apaas的用户信息获取apaas中的用户信息，并存入apaas_user_records中
+                await application.data
                 .object('_user')
-                .select(['_email', '_id'])
-                .where({ _email: application.operator.in(user_email_list) })
+                .select(['_email', '_id','_phoneNumber'])
+                .where({ _phoneNumber: application.operator.contain(phone_number_without_prefix) })
                 .findStream(records => {
                     apaas_user_records.push(...records);
                 });
-            logger.info('apaas_user_records', apaas_user_records.length);
+            }
+          logger.info('获取到的用户列表：',apaas_user_records)
 
             let apaas_user_ids = apaas_user_records.map(record => record._id);
             if (apaas_user_ids.length === 0) {
