@@ -14,7 +14,7 @@ const _ = application.operator;
  */
 module.exports = async function (params, context, logger) {
     // 日志功能
-    logger.info(`${new Date()} 【任务】任务创建重试`);
+    logger.info(`${new Date()} 【任务】任务创建重试`,params);
 
     //任务处理记录
     const {object_task_create_monitor} = params;

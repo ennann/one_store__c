@@ -35,7 +35,7 @@ module.exports = async function (params, context, logger) {
     //查询任务定义
     const task_def_record = await application.data.object("object_task_def")
         .select("_id", "option_upload_image", "option_input_information", "option_upload_attachement", "send_channel")
-        .where({_id: object_task_create_monitor.task_def._id}).findOne();
+        .where({_id: object_task_create_monitor.task_def._id || object_task_create_monitor.task_def.id}).findOne();
     if (!task_def_record) {
         logger.error("该任务批次的任务定义数据不存在")
         return {code: false, message: "该任务批次的任务定义不存在"}
