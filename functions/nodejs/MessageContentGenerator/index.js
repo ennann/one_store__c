@@ -29,7 +29,6 @@ module.exports = async function (params, context, logger) {
           image: file,
         },
       });
-      logger.info({ imageKeyRes });
       return imageKeyRes.image_key;
     } catch (error) {
       logger.error("上传图片失败", error);
@@ -60,7 +59,7 @@ module.exports = async function (params, context, logger) {
     // 多张图片使用消息卡片模板类型
     const elements = getCardImgElement(imageKeys);
     const info = {
-      elements,
+      elements: [{ ...elements }],
       header: {
         template: "turquoise",
         title: {
@@ -86,8 +85,9 @@ module.exports = async function (params, context, logger) {
     // const divRegex = /<div[^>]*>(.*?)<\/div>/gs;
     const divRegex = /<div[^>]*>\s*([\s\S]*?)\s*<\/div>/gs;
     const hrefRegex = /href="([^"]*)"/;
+    const _htmlString = htmlString.replace(/<div[^>]*><\/div>/g, '');
 
-    while ((match = divRegex.exec(htmlString)) !== null && !!match[1]) {
+    while ((match = divRegex.exec(_htmlString)) !== null && !!match[1]) {
       divs.push(match[1]);
     }
 
@@ -95,6 +95,7 @@ module.exports = async function (params, context, logger) {
 
     for (const div of divs) {
       const imgs = [];
+      imgRegex.lastIndex = 0;
       // 图片
       while ((match = imgRegex.exec(div)) !== null) {
         const imgDiv = match[0];
@@ -104,7 +105,6 @@ module.exports = async function (params, context, logger) {
         imgs.push({ token });
       }
       if (imgs.length > 0) {
-        logger.info({ imgs });
         const imgKeys = await getImageKeys(imgs);
         logger.info({ imgKeys });
         const imgElement = getCardImgElement(imgKeys);

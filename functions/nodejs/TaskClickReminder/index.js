@@ -22,7 +22,7 @@ module.exports = async function (params, context, logger) {
     let client = await newLarkClient({userId: context.user._id}, logger);
     //获取普通任务
     const object_store_tasks = await application.data.object("object_store_task")
-        .select("name", "option_priority", "source_department", "task_create_time", "deadline_time", "task_handler", "task_chat")
+        .select("name", "option_priority", "source_department", "task_create_time", "deadline_time", "task_handler", "task_chat", "task_plan_time")
         .where({
             task_monitor: {_id: object_task_create_monitor._id},
             task_status: application.operator.in('option_pending', 'option_transferred', 'option_rollback')
