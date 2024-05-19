@@ -176,14 +176,16 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
                     option_upload_attachementdd: item.option_upload_attachement, //任务要求上传附件
                     set_warning_time: item.set_warning_time, //是否设置任务到期前提醒
                     warning_time: item.warning_time, //预警时间（小时）
-                    source_department: { _id: department_record._id, _name: department_record._name }, //任务来源
+                    source_department: {_id: department_record._id, _name: department_record._name}, //任务来源
                     option_priority: item.option_priority, //优先级
                 };
                 //为任务处理记录（任务批次）创建门店普通任务
                 createData.task_chat = {_id: chatRecordListElement._id}; //负责群
                 //查询飞书群所在部门
                 const feishu_chat = await application.data.object('object_feishu_chat').select('_id', 'department').where({_id: chatRecordListElement._id}).findOne();
-                createData.deal_department = {_id: feishu_chat.department._id}; //任务所属部门
+                if (feishu_chat) {
+                    createData.deal_department = {_id: feishu_chat.department._id}; //任务所属部门
+                }
                 createDataList.push(createData);
             }
         } else if (item.option_handler_type === 'option_02') {
@@ -206,7 +208,7 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
                     option_upload_attachementdd: item.option_upload_attachement, //任务要求上传附件
                     set_warning_time: item.set_warning_time, //是否设置任务到期前提醒
                     warning_time: item.warning_time, //预警时间（小时）
-                    source_department: { _id: department_record._id, _name: department_record._name }, //任务来源
+                    source_department: {_id: department_record._id, _name: department_record._name}, //任务来源
                     option_priority: item.option_priority, //优先级
                 };
                 //为任务处理记录（任务批次）创建门店普通任务
@@ -325,7 +327,7 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
             // `https://applink.feishu.cn/client/web_app/open?mode=sidebar&appId=cli_a6b23873d463100b&path=/ae/user/pc/one_store__c/system_page/action&1=1&variables%5B0%5D%5BvarApiName%5D=customizeInput__original__717a10b5&variables%5B0%5D%5BinputValue%5D=${storeTaskId._id}&1=1&actionApiName=automation_952bc370750&namespace=one_store__c&recordID=&version=v2`
 
             //判断执行流程的url
-            const url =  "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + storeTaskId._id;
+            const url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + storeTaskId._id;
             const pc_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + storeTaskId._id;
             const android_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + storeTaskId._id;
             const ios_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + storeTaskId._id;
@@ -428,8 +430,8 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
                         .select('_id', 'chat_id')
                         .where({department: feishuPeople._department._id || feishuPeople._department.id})
                         .findOne();
-                    logger.info("获取部门所在飞书群----->",JSON.stringify(object_feishu_chat,null,2));
-                    if (!object_feishu_chat){
+                    logger.info("获取部门所在飞书群----->", JSON.stringify(object_feishu_chat, null, 2));
+                    if (!object_feishu_chat) {
                         logger.warn(`该用户[${feishuPeople._id}]的部门飞书群不存在`);
                         return {
                             code: 0,

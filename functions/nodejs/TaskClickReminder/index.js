@@ -28,6 +28,7 @@ module.exports = async function (params, context, logger) {
             task_status: application.operator.in('option_pending', 'option_transferred', 'option_rollback')
         })
         .find();
+    logger.info("object_store_tasks->",JSON.stringify(object_store_tasks,null,2));
     //待发送飞书消息列表
     let messageCardSendDatas = []
     let taskCount = 0;
@@ -45,7 +46,8 @@ module.exports = async function (params, context, logger) {
             logger.info("item->",JSON.stringify(item,null,2));
             //任务名称
             const object_store_tasks_name = item.name;
-
+            //剩余时间
+            const hourDiff = (item.task_plan_time - dayjs().valueOf()) / 36e5;
             let priority = await faas.function("GetOptionName").invoke({
                 table_name: "object_store_task",
                 option_type: "option_priority",
@@ -85,7 +87,7 @@ module.exports = async function (params, context, logger) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "距离截至时间还有" + Number.parseFloat(item.deadline_time).toFixed(2) + "小时",
+                            "content": "距离截至时间还有" + hourDiff.toFixed(2) + "小时",
                             "tag": "plain_text"
                         }
                     },
