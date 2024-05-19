@@ -21,5 +21,12 @@
             "objectApiName": "object_task"
         }
     ],
-    "output": []
+    "output": [
+        {
+            "key": "has_verify_task",
+            "type": "Boolean",
+            "label": "是否有验收任务",
+            "description": "是否有后续验收任务"
+        }
+    ]
 }

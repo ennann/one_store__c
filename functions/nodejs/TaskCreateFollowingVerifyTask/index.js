@@ -49,7 +49,7 @@ module.exports = async function (params, context, logger) {
     if (verify_task.check_activity === 'option_03') {
         // 如果当前验收任务阶段是第三个阶段，则无需创建后续验收任务
         logger.info('当前验收任务阶段为最后一个阶段（第三阶段），无需创建后续验收任务');
-        return;
+        return { has_verify_task: false };
     } else if (verify_task.check_activity === 'option_02') {
         // 如果当前验收任务阶段是第二个阶段，则判断是否需要创建第三个阶段的验收任务
         // 查找 option_check_activity: 'option_03' 的任务验收流程明细记录
@@ -62,7 +62,7 @@ module.exports = async function (params, context, logger) {
 
         if (!checkFlowDetailRecord) {
             logger.info('当前验收任务阶段为第二个阶段，但无需创建第三个阶段的验收任务');
-            return;
+            return { has_verify_task: false };
         }
         // 将新的验收任务阶段设置为第三个阶段
         checkActivity = 'option_03';
@@ -77,7 +77,7 @@ module.exports = async function (params, context, logger) {
 
         if (!checkFlowDetailRecord) {
             logger.info('当前验收任务阶段为第一个阶段，但无需创建第二个阶段的验收任务');
-            return;
+            return { has_verify_task: true };
         }
         // 将新的验收任务阶段设置为第二个阶段
         checkActivity = 'option_02';
@@ -165,4 +165,5 @@ module.exports = async function (params, context, logger) {
     // 创建验收任务
     let verifyTaskRecord = await application.data.object('object_task').create(verifyTask);
     logger.info('验收任务记录 verifyTaskRecord', verifyTaskRecord);
+    return { has_verify_task: true };
 };

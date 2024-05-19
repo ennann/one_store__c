@@ -29,6 +29,7 @@ module.exports = async function (params, context, logger) {
           image: file,
         },
       });
+      logger.info({ imageKeyRes });
       return imageKeyRes.image_key;
     } catch (error) {
       logger.error("上传图片失败", error);
@@ -78,11 +79,12 @@ module.exports = async function (params, context, logger) {
   // 转换富文本-飞书卡片类型
   const formatRichToCard = async (htmlString, title) => {
     const divs = [];
-    const formattedData = [];
+    const elements = [];
     let match;
     const imgRegex = /<img[^>]*src="([^"]*)"[^>]*>/g;
     const tagRegex = /<[^>]*>/g;
-    const divRegex = /<div[^>]*>(.*?)<\/div>/gs;
+    // const divRegex = /<div[^>]*>(.*?)<\/div>/gs;
+    const divRegex = /<div[^>]*>\s*([\s\S]*?)\s*<\/div>/gs;
     const hrefRegex = /href="([^"]*)"/;
 
     while ((match = divRegex.exec(htmlString)) !== null && !!match[1]) {
@@ -95,34 +97,40 @@ module.exports = async function (params, context, logger) {
       const imgs = [];
       // 图片
       while ((match = imgRegex.exec(div)) !== null) {
-        const srcMatch = div.match(/src="([^"]*)"/);
+        const imgDiv = match[0];
+        const srcMatch = imgDiv.match(/src="([^"]*)"/);
         const urlParams = new URLSearchParams(srcMatch[1].split('?')[1]);
         const token = urlParams.get('token');
         imgs.push({ token });
       }
       if (imgs.length > 0) {
+        logger.info({ imgs });
         const imgKeys = await getImageKeys(imgs);
+        logger.info({ imgKeys });
         const imgElement = getCardImgElement(imgKeys);
-        formattedData.push(imgElement);
+        elements.push(imgElement);
       }
-      logger.info({ div });
       if ((match = imgRegex.exec(div)) === null) {
         const content = parseMarkdown(div);
         logger.info({ content });
-        formattedData.push({
-          tag: "div",
-          text: {
-            tag: "markdown",
-            content
-          }
+        elements.push({
+          tag: "markdown",
+          content
         });
       }
     }
-    logger.info({ formattedData });
-    return {
-      msg_type: "interactive",
-      content: JSON.stringify(formattedData)
+    const info = {
+      elements,
+      header: {
+        template: "turquoise",
+        title: {
+          tag: "plain_text",
+          content: title,
+        }
+      },
     };
+    logger.info({ info });
+    return info;
   };
 
   // 获取消息内容
@@ -132,7 +140,7 @@ module.exports = async function (params, context, logger) {
       case 'option_rich_text':
         const postData = await formatRichToCard(record.message_richtext.raw, record.message_title);
         return {
-          msg_type: "post",
+          msg_type: "interactive",
           content: JSON.stringify(postData)
         };
       // 视频类型消息直接发成文本类型
@@ -200,6 +208,7 @@ const getCardImgElement = (imageKeys) => {
       }
     ]
   }));
+  console.log({ columns });
   const elements = {
     tag: "column_set",
     background_style: "default",
