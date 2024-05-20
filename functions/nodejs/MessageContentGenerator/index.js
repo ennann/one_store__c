@@ -58,7 +58,7 @@ module.exports = async function (params, context, logger) {
     }
     // 多张图片使用消息卡片模板类型
     const elements = getCardImgElement(imageKeys);
-    let info = { elements: [{ ...elements }] };
+    let info = { elements };
     if (record.message_title) {
       info = {
         ...info,
@@ -109,13 +109,11 @@ module.exports = async function (params, context, logger) {
       }
       if (imgs.length > 0) {
         const imgKeys = await getImageKeys(imgs);
-        logger.info({ imgKeys });
         const imgElement = getCardImgElement(imgKeys);
-        elements.push(imgElement);
+        elements.push(...imgElement);
       }
       if ((match = imgRegex.exec(div)) === null) {
         const content = parseMarkdown(div);
-        logger.info({ content });
         elements.push({
           tag: "markdown",
           content
@@ -196,38 +194,43 @@ module.exports = async function (params, context, logger) {
 
 // 获取飞书卡片的图片布局信息
 const getCardImgElement = (imageKeys) => {
-  // 多张图片使用消息卡片模板类型
-  const columns = imageKeys.map(img_key => ({
-    tag: "column",
-    width: "weighted",
-    weight: 1,
-    elements: [
-      {
-        img_key,
-        tag: "img",
-        mode: "fit_horizontal",
-        preview: true,
-        alt: {
-          content: "",
-          tag: "plain_text"
-        },
-      }
-    ]
-  }));
-  console.log({ columns });
-  const elements = {
-    tag: "column_set",
-    background_style: "default",
-    horizontal_spacing: "default",
-    columns,
-    flex_mode: imageKeys.length === 1
-      ? "none"
-      : [2, 4].includes(imageKeys.length)
-        ? "bisect"
-        : "trisect",
-  };
-
-  return elements;
+  // 先分列，三图一列
+  const imageKeyList = splitArray(imageKeys);
+  const list = imageKeyList.reduce((pre, imageKeys) => {
+    const columns = imageKeys.map(img_key => ({
+      tag: "column",
+      width: "weighted",
+      weight: 1,
+      elements: [
+        {
+          img_key,
+          tag: "img",
+          mode: "fit_horizontal",
+          preview: true,
+          alt: {
+            content: "",
+            tag: "plain_text"
+          },
+        }
+      ]
+    }));
+    const elements = {
+      tag: "column_set",
+      background_style: "default",
+      horizontal_spacing: "default",
+      columns,
+      flex_mode: imageKeys.length === 1
+        ? "none"
+        : [2, 4].includes(imageKeys.length)
+          ? "bisect"
+          : "trisect",
+    };
+    return [
+      ...pre,
+      elements
+    ];
+  }, []);
+  return list;
 };
 
 const parseMarkdown = (text) => {
@@ -249,3 +252,11 @@ const parseMarkdown = (text) => {
     return handler ? handler(match, content) : content;
   });
 };
+
+function splitArray(arr, size = 3) {
+  var result = [];
+  for (var i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
