@@ -496,7 +496,8 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
         const pc_url =  "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgigzw3e2as?params_var_5CWWdDBS="+task_def_record._id+"&lane_id=develop"
         const android_url =  ""
         const ios_url =  ""
-        const hourDiff = (object_task_create_monitor.task_plan_time - dayjs().valueOf()) / 36e5;
+        let task_plan_time = dayjs(object_task_create_monitor.task_create_time).add(task_def_record.deal_duration, 'day').valueOf();
+        const hourDiff = (task_plan_time - dayjs().valueOf()) / 36e5;
         const content = {
             config: {
                 wide_screen_mode: true,
