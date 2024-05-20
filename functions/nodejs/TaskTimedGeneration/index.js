@@ -352,7 +352,7 @@ async function createStoreTaskEntryStart(task, logger) {
                     {
                         tag: 'div',
                         text: {
-                            content: '任务下发时间：' + dayjs(task.task_create_time).utcOffset(8).format('YYYY-MM-DD HH:mm:ss'),
+                            content: '任务下发时间：' + dayjs(task.task_create_time).add(8,"hour").format('YYYY-MM-DD HH:mm:ss'),
                             tag: 'plain_text',
                         },
                     },
@@ -476,6 +476,8 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
     const cardDataList = [];
     const apassDataList = [];
     logger.info("抄送任务定义详情->",JSON.stringify(task_def_record,null,2),"任务批次详情->",JSON.stringify(object_task_create_monitor,null,2));
+    //获取部门详情
+    let department_record = await application.data.object('_department').select('_id', "_name").where({_id: task_def_record.publish_department.id||task_def_record.publish_department._id}).findOne();
     //遍历人员
     for (const user of userList) {
         //飞书消息
@@ -485,23 +487,90 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
             receive_id: user.user_id, //接收方ID text
             content: '', //消息卡片内容  JSON
         };
+        let priority = await faas.function("GetOptionName").invoke({
+            table_name: "object_task_def",
+            option_type: "option_priority",
+            option_api: task_def_record.option_priority
+        });
+        const url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgigzw3e2as?params_var_5CWWdDBS="+task_def_record._id+"&lane_id=develop"
+        const pc_url =  "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgigzw3e2as?params_var_5CWWdDBS="+task_def_record._id+"&lane_id=develop"
+        const android_url =  ""
+        const ios_url =  ""
+        const hourDiff = (object_task_create_monitor.task_plan_time - dayjs().valueOf()) / 36e5;
         const content = {
             config: {
                 wide_screen_mode: true,
             },
             elements: [
                 {
-                    tag: 'div',
-                    text: {
-                        content: '任务抄送内容',
-                        tag: 'plain_text',
-                    },
+                    "tag": "div",
+                    "text": {
+                        "content": "任务标题：" + task_def_record.name,
+                        "tag": "plain_text"
+                    }
+                },
+                {
+                    "tag": "div",
+                    "text": {
+                        "content": "任务描述：" + task_def_record.description,
+                        "tag": "plain_text"
+                    }
+                },
+                {
+                    "tag": "div",
+                    "text": {
+                        "content": "任务优先级：" + priority.option_name,
+                        "tag": "plain_text"
+                    }
+                },
+                {
+                    "tag": "div",
+                    "text": {
+                        "content": "任务来源：" + department_record._name.find(item => item.language_code === 2052).text,
+                        "tag": "plain_text"
+                    }
+                },
+                {
+                    "tag": "div",
+                    "text": {
+                        "content": "任务下发时间：" + dayjs(object_task_create_monitor.task_create_time).add(8,"hour").format('YYYY-MM-DD HH:mm:ss'),
+                        "tag": "plain_text"
+                    }
+                },
+                {
+                    "tag": "div",
+                    "text": {
+                        "content": "距离截至时间还有" + hourDiff.toFixed(2) + "小时",
+                        "tag": "plain_text"
+                    }
+                },
+                {
+                    "tag": "hr"
+                },
+                {
+                    "tag": "action",
+                    "actions": [
+                        {
+                            "tag": "button",
+                            "text": {
+                                "tag": "plain_text",
+                                "content": "查看详情"
+                            },
+                            "type": "primary",
+                            "multi_url": {
+                                "url": url,
+                                "pc_url": pc_url,
+                                "android_url": android_url,
+                                "ios_url": ios_url
+                            }
+                        }
+                    ]
                 }
             ],
             header: {
                 template: 'turquoise',
                 title: {
-                    content: '【任务抄送】有N条门店任务发布！',
+                    content: '【任务抄送】有一条门店任务发布！',
                     tag: 'plain_text',
                 },
             },
