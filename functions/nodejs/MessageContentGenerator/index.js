@@ -58,16 +58,19 @@ module.exports = async function (params, context, logger) {
     }
     // 多张图片使用消息卡片模板类型
     const elements = getCardImgElement(imageKeys);
-    const info = {
-      elements: [{ ...elements }],
-      header: {
-        template: "turquoise",
-        title: {
-          tag: "plain_text",
-          content: record.message_title,
-        }
-      },
-    };
+    let info = { elements: [{ ...elements }] };
+    if (record.message_title) {
+      info = {
+        ...info,
+        header: {
+          template: "turquoise",
+          title: {
+            tag: "plain_text",
+            content: record.message_title,
+          }
+        },
+      }
+    }
     logger.info({ info });
     return {
       msg_type: "interactive",
@@ -119,16 +122,19 @@ module.exports = async function (params, context, logger) {
         });
       }
     }
-    const info = {
-      elements,
-      header: {
-        template: "turquoise",
-        title: {
-          tag: "plain_text",
-          content: title,
-        }
-      },
-    };
+    let info = { elements };
+    if (title) {
+      info = {
+        ...info,
+        header: {
+          template: "turquoise",
+          title: {
+            tag: "plain_text",
+            content: title,
+          }
+        },
+      }
+    }
     logger.info({ info });
     return info;
   };
