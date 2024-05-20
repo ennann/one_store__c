@@ -33,24 +33,24 @@ module.exports = async function (params, context, logger) {
     const limitedSendFeishuMessage = createLimiter(sendFeishuMessage);
     const client = await newLarkClient({userId: context.user._id}, logger);
     //2.  第二步根据任务定义，创建抄送人apass数据，给抄送人发送飞书消息
-    // if (task_def_record.carbon_copy) {
-    //     const carbonCopy = task_def_record.carbon_copy;
-    //     const userList = await faas.function('DeployMemberRange').invoke({user_rule: carbonCopy});
-    //     logger.info(`抄送人员筛选规则[${carbonCopy._id}]返回人员数量->`, userList.length)
-    //     if (userList.length > 0) {
-    //         const res = await getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, taskBatchNumberCreateResult.object_task_create_monitor);
-    //         const cardDataList = res.cardDataList;
-    //         const sendFeishuMessageResults = await Promise.all(cardDataList.map(item => limitedSendFeishuMessage(item)));
-    //         const sendFeishuMessageSuccess = sendFeishuMessageResults.filter(result => result.code === 0);
-    //         const sendFeishuMessageFail = sendFeishuMessageResults.filter(result => result.code !== 0);
-    //         logger.info(`根据抄送人员筛选规则需要发送飞书数量->${cardDataList.length},成功数量->${sendFeishuMessageSuccess.length},失败数量->${sendFeishuMessageFail.length}`);
-    //         const apassDataList = res.apassDataList;
-    //         const createApassDataResults = await Promise.all(apassDataList.map(item => createApassData(item)));
-    //         const createApassDataSuccess = createApassDataResults.filter(result => result.code === 0);
-    //         const createApassDataFail = createApassDataResults.filter(result => result.code !== 0);
-    //         logger.info(`根据抄送人员筛选规则需要创建抄送人apass数据数量->${apassDataList.length},成功数量->${createApassDataSuccess.length},失败数量->${createApassDataFail.length}`);
-    //     }
-    // }
+    if (task_def_record.carbon_copy) {
+        const carbonCopy = task_def_record.carbon_copy;
+        const userList = await faas.function('DeployMemberRange').invoke({user_rule: carbonCopy});
+        logger.info(`抄送人员筛选规则[${carbonCopy._id}]返回人员数量->`, userList.length)
+        if (userList.length > 0) {
+            const res = await getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, taskBatchNumberCreateResult.object_task_create_monitor);
+            const cardDataList = res.cardDataList;
+            const sendFeishuMessageResults = await Promise.all(cardDataList.map(item => limitedSendFeishuMessage(item)));
+            const sendFeishuMessageSuccess = sendFeishuMessageResults.filter(result => result.code === 0);
+            const sendFeishuMessageFail = sendFeishuMessageResults.filter(result => result.code !== 0);
+            logger.info(`根据抄送人员筛选规则需要发送飞书数量->${cardDataList.length},成功数量->${sendFeishuMessageSuccess.length},失败数量->${sendFeishuMessageFail.length}`);
+            const apassDataList = res.apassDataList;
+            const createApassDataResults = await Promise.all(apassDataList.map(item => createApassData(item)));
+            const createApassDataSuccess = createApassDataResults.filter(result => result.code === 0);
+            const createApassDataFail = createApassDataResults.filter(result => result.code !== 0);
+            logger.info(`根据抄送人员筛选规则需要创建抄送人apass数据数量->${apassDataList.length},成功数量->${createApassDataSuccess.length},失败数量->${createApassDataFail.length}`);
+        }
+    }
     // 3. 第三步根据任务处理记录（任务批次）创建门店普通任务
     //创建门店普通任务
 
@@ -481,9 +481,9 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
     for (const user of userList) {
         //飞书消息
         const cardData = {
-            receive_id_type: 'open_id', //接收方类型：open_id/user_id/union_id/email/chat_id text
+            receive_id_type: 'user_id', //接收方类型：open_id/user_id/union_id/email/chat_id text
             msg_type: 'interactive', //消息类型：text、post、image、file、audio、media、sticker、interactive、share_chat、share_user text
-            receive_id: user.open_id, //接收方ID text
+            receive_id: user.user_id, //接收方ID text
             content: '', //消息卡片内容  JSON
         };
         const content = {
