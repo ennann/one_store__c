@@ -291,7 +291,7 @@ async function createStoreTaskEntryStart(object_store_task, logger) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "任务下发时间：" + dayjs(object_store_task.task_create_time).add(8,"hour").format('YYYY-MM-DD HH:mm:ss'),
+                            "content": "任务下发时间：" + dayjs(object_store_task.task_create_time).add(8, "hour").format('YYYY-MM-DD HH:mm:ss'),
                             "tag": "plain_text"
                         }
                     },
@@ -371,9 +371,9 @@ async function createStoreTaskEntryStart(object_store_task, logger) {
                 } else {
                     data.receive_id_type = "user_id"
                     data.receive_id = feishuPeople._lark_user_id;
-                    content.header.title.content = "【任务发布】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + object_store_task.name + "门店任务请尽快处理！";
-                    data.content = JSON.stringify(content);
                 }
+                content.header.title.content = "【任务发布】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + object_store_task.name + "门店任务请尽快处理！";
+                data.content = JSON.stringify(content);
             }
 
             return {code: 0, message: '创建门店普通任务成功', storeTaskId: storeTaskId, messageCardSendData: data};

@@ -36,9 +36,9 @@ module.exports = async function (params, context, logger) {
     if (task_def_record.carbon_copy) {
         const carbonCopy = task_def_record.carbon_copy;
         const userList = await faas.function('DeployMemberRange').invoke({user_rule: carbonCopy});
-        logger.info(`抄送人员筛选规则[${carbonCopy._id}]返回人员数量->`, userList.length,'详情->',JSON.stringify(userList,null,2))
+        logger.info(`抄送人员筛选规则[${carbonCopy._id}]返回人员数量->`, userList.length, '详情->', JSON.stringify(userList, null, 2))
         if (userList.length > 0) {
-            const res = await getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, taskBatchNumberCreateResult.object_task_create_monitor,logger);
+            const res = await getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, taskBatchNumberCreateResult.object_task_create_monitor, logger);
             const cardDataList = res.cardDataList;
             const sendFeishuMessageResults = await Promise.all(cardDataList.map(item => limitedSendFeishuMessage(item)));
             const sendFeishuMessageSuccess = sendFeishuMessageResults.filter(result => result.code === 0);
@@ -160,7 +160,7 @@ async function createStoreTaskEntry(taskDef, task, logger, limitedSendFeishuMess
             const chatRecordList = await faas.function('DeployChatRange').invoke({deploy_rule: item.chat_rule});
             logger.info(`群组筛选规则[${item.chat_rule._id}]返回群数量->`, chatRecordList.length);
             logger.info(`群组筛选规则[${item.chat_rule._id}]返回群详情->`, JSON.stringify(chatRecordList, null, 2));
-           for (const chatRecordListElement of chatRecordList) {
+            for (const chatRecordListElement of chatRecordList) {
                 const createData = {
                     name: item.name,
                     description: item.description,
@@ -352,7 +352,7 @@ async function createStoreTaskEntryStart(task, logger) {
                     {
                         tag: 'div',
                         text: {
-                            content: '任务下发时间：' + dayjs(task.task_create_time).add(8,"hour").format('YYYY-MM-DD HH:mm:ss'),
+                            content: '任务下发时间：' + dayjs(task.task_create_time).add(8, "hour").format('YYYY-MM-DD HH:mm:ss'),
                             tag: 'plain_text',
                         },
                     },
@@ -420,7 +420,6 @@ async function createStoreTaskEntryStart(task, logger) {
                     .where({_id: task.task_def._id || task.task_def.id})
                     .findOne();
                 if (object_task_def.send_channel === 'option_group') {
-                    data.receive_id_type = 'chat_id';
                     //通过部门ID获取飞书群ID
                     let object_feishu_chat = await application.data
                         .object('object_feishu_chat')
@@ -436,16 +435,17 @@ async function createStoreTaskEntryStart(task, logger) {
                             messageCardSendData: {}
                         };
                     }
+                    data.receive_id_type = 'chat_id';
                     data.receive_id = object_feishu_chat.chat_id;
 
                 } else {
                     // logger.info("通过机器人发送----->");
                     data.receive_id_type = 'user_id';
                     data.receive_id = feishuPeople._lark_user_id;
-                    content.header.title.content =
-                        '【任务发布】' + feishuPeople._name.find(item => item.language_code === 2052).text + '有一条' + task.name + '门店任务请尽快处理！';
-                    data.content = JSON.stringify(content);
                 }
+                content.header.title.content =
+                    '【任务发布】' + feishuPeople._name.find(item => item.language_code === 2052).text + '有一条' + task.name + '门店任务请尽快处理！';
+                data.content = JSON.stringify(content);
             }
             return {code: 0, message: '创建门店普通任务成功', messageCardSendData: data};
         } catch (error) {
@@ -472,12 +472,12 @@ async function createStoreTaskEntryStart(task, logger) {
  * @param {*} logger 日志
  * @returns
  */
-async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, object_task_create_monitor,logger) {
+async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, object_task_create_monitor, logger) {
     const cardDataList = [];
     const apassDataList = [];
-    logger.info("抄送任务定义详情->",JSON.stringify(task_def_record,null,2),"任务批次详情->",JSON.stringify(object_task_create_monitor,null,2));
+    logger.info("抄送任务定义详情->", JSON.stringify(task_def_record, null, 2), "任务批次详情->", JSON.stringify(object_task_create_monitor, null, 2));
     //获取部门详情
-    let department_record = await application.data.object('_department').select('_id', "_name").where({_id: task_def_record.publish_department.id||task_def_record.publish_department._id}).findOne();
+    let department_record = await application.data.object('_department').select('_id', "_name").where({_id: task_def_record.publish_department.id || task_def_record.publish_department._id}).findOne();
     //遍历人员
     for (const user of userList) {
         //飞书消息
@@ -492,10 +492,10 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
             option_type: "option_priority",
             option_api: task_def_record.option_priority
         });
-        const url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgigzw3e2as?params_var_5CWWdDBS="+task_def_record._id+"&lane_id=develop"
-        const pc_url =  "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgigzw3e2as?params_var_5CWWdDBS="+task_def_record._id+"&lane_id=develop"
-        const android_url =  ""
-        const ios_url =  ""
+        const url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgigzw3e2as?params_var_5CWWdDBS=" + task_def_record._id + "&lane_id=develop"
+        const pc_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgigzw3e2as?params_var_5CWWdDBS=" + task_def_record._id + "&lane_id=develop"
+        const android_url = ""
+        const ios_url = ""
         let task_plan_time = dayjs(object_task_create_monitor.task_create_time).add(task_def_record.deal_duration, 'day').valueOf();
         const hourDiff = (task_plan_time - dayjs().valueOf()) / 36e5;
         const content = {
@@ -534,7 +534,7 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
                 {
                     "tag": "div",
                     "text": {
-                        "content": "任务下发时间：" + dayjs(object_task_create_monitor.task_create_time).add(8,"hour").format('YYYY-MM-DD HH:mm:ss'),
+                        "content": "任务下发时间：" + dayjs(object_task_create_monitor.task_create_time).add(8, "hour").format('YYYY-MM-DD HH:mm:ss'),
                         "tag": "plain_text"
                     }
                 },
@@ -577,10 +577,10 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
             },
         };
         cardData.content = JSON.stringify(content);
-        if (cardData.receive_id){
+        if (cardData.receive_id) {
             cardDataList.push(cardData);
-        }else {
-            logger.warn("抄送人的user_id为null->",JSON.stringify(user,2,null))
+        } else {
+            logger.warn("抄送人的user_id为null->", JSON.stringify(user, 2, null))
         }
         //apass数据
         const apassData = {

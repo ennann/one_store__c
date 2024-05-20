@@ -12,7 +12,7 @@ const dayjs = require("dayjs");
  */
 module.exports = async function (params, context, logger) {
     // 日志功能
-    logger.info(`${new Date()} 任务一键催办函数开始执行`,params);
+    logger.info(`${new Date()} 任务一键催办函数开始执行`, params);
 
     const {object_task_create_monitor} = params;
     if (!object_task_create_monitor) {
@@ -28,7 +28,7 @@ module.exports = async function (params, context, logger) {
             task_status: application.operator.in('option_pending', 'option_transferred', 'option_rollback')
         })
         .find();
-    logger.info("object_store_tasks->",JSON.stringify(object_store_tasks,null,2));
+    logger.info("object_store_tasks->", JSON.stringify(object_store_tasks, null, 2));
     //待发送飞书消息列表
     let messageCardSendDatas = []
     let taskCount = 0;
@@ -43,7 +43,7 @@ module.exports = async function (params, context, logger) {
     }
     if (object_store_tasks.length > 0) {
         for (const item of object_store_tasks) {
-            logger.info("item->",JSON.stringify(item,null,2));
+            logger.info("item->", JSON.stringify(item, null, 2));
             //任务名称
             const object_store_tasks_name = item.name;
             //剩余时间
@@ -54,7 +54,7 @@ module.exports = async function (params, context, logger) {
                 option_api: item.option_priority
             });
             //判断执行流程的url
-            const url =  "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + item._id;
+            const url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + item._id;
             const pc_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgik5q3gyhw?params_var_bcBO3kSg=" + item._id;
             const android_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + item._id;
             const ios_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + item._id;
@@ -80,7 +80,7 @@ module.exports = async function (params, context, logger) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "任务下发时间：" + dayjs(item.task_create_time).add(8,"hour").format('YYYY-MM-DD HH:mm:ss'),
+                            "content": "任务下发时间：" + dayjs(item.task_create_time).add(8, "hour").format('YYYY-MM-DD HH:mm:ss'),
                             "tag": "plain_text"
                         }
                     },
@@ -140,7 +140,7 @@ module.exports = async function (params, context, logger) {
                 taskCount++;
             } else {
                 const feishuPeople = await application.data.object('_user')
-                    .select('_id',"_name", "_department", "_lark_user_id")
+                    .select('_id', "_name", "_department", "_lark_user_id")
                     .where({_id: item.task_handler._id}).findOne();
                 //判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
                 if (task_def_record.send_channel === "option_group") {
@@ -148,24 +148,24 @@ module.exports = async function (params, context, logger) {
                     let object_feishu_chat = await application.data.object("object_feishu_chat")
                         .select("_id", "chat_id")
                         .where({department: feishuPeople._department._id}).findOne();
-                    if (object_feishu_chat){
+                    if (object_feishu_chat) {
                         data.receive_id = object_feishu_chat.chat_id
                         messageCardSendDatas.push(data);
                         userCount++;
-                    }else{
+                    } else {
                         logger.warn(`该用户[${feishuPeople._id}]的部门飞书群不存在`)
                     }
                 } else {
                     data.receive_id_type = "user_id"
                     data.receive_id = feishuPeople._lark_user_id;
-                    content.header.title.content = "【催办消息】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + object_store_tasks_name + "门店任务请尽快处理！";
-                    data.content = JSON.stringify(content);
-                    messageCardSendDatas.push(data);
-                    userCount++;
                 }
+                content.header.title.content = "【催办消息】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + object_store_tasks_name + "门店任务请尽快处理！";
+                data.content = JSON.stringify(content);
+                messageCardSendDatas.push(data);
+                userCount++;
             }
         }
-    }else{
+    } else {
         logger.error("根据任务批次查询门店普通任务为0");
         return {
             code: false,

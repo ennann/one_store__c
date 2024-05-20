@@ -209,10 +209,10 @@ module.exports = async function (params, context, logger) {
             } else {
                 data.receive_id_type = "user_id"
                 data.receive_id = feishuPeople._lark_user_id;
-                content.header.title.content = "【任务到期提醒】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + objectStoreTaskElement.name + "门店任务请尽快处理！";
-                data.content = JSON.stringify(content);
-                messageCardSendDatas.push(data);
             }
+            content.header.title.content = "【任务到期提醒】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + objectStoreTaskElement.name + "门店任务请尽快处理！";
+            data.content = JSON.stringify(content);
+            messageCardSendDatas.push(data);
         }
     }
     //创建限流器
