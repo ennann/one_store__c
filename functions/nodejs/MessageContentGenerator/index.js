@@ -113,7 +113,7 @@ module.exports = async function (params, context, logger) {
         elements.push(...imgElement);
       }
       if ((match = imgRegex.exec(div)) === null) {
-        const content = parseMarkdown(div);
+        const content = transformText(div);
         elements.push({
           tag: "markdown",
           content
@@ -233,29 +233,40 @@ const getCardImgElement = (imageKeys) => {
   return list;
 };
 
+const replaceText = str => str.replace(/<[^>]*>/g, '');
+
+const transformText = (html) => {
+  const htmlString = parseMarkdown(html);
+  return replaceText(htmlString);
+};
+
 const parseMarkdown = (text) => {
-  const tagRegex = /<([a-z]+)[^>]*>(.*?)<\/\1>/;
-  const replaceText = str => str.replace(/<[^>]*>/g, '');
+  const tagRegex = /<([a-z]+)[^>]*>(.*?)<\/\1>/g;
 
   const tagHandlers = {
     a: (match, content) => {
       const url = match.match(/href="(.*?)"/)[1];
       return "[" + replaceText(content) + "](" + url + ")";
     },
-    b: (content) => "**" + replaceText(content) + "**",
-    i: (content) => "*" + replaceText(content) + "*",
-    s: (content) => "~~~" + replaceText(content) + "~~~"
+    b: (content) => "**" + parseMarkdown(content) + "**",
+    i: (content) => "*" + parseMarkdown(content) + "*",
+    s: (content) => "~~" + parseMarkdown(content) + "~~",
   };
 
   return text.replace(tagRegex, (match, tagName, content) => {
-    const handler = tagHandlers[tagName];
-    return handler ? handler(match, content) : content;
+    if (tagName === 'a') {
+      return tagHandlers[tagName](match, content);
+    } else if (tagHandlers[tagName]) {
+      return tagHandlers[tagName](content);
+    } else {
+      return content;
+    }
   });
 };
 
 function splitArray(arr, size = 3) {
   var result = [];
-  for (var i = 0; i < arr.length; i += size) {
+  for (let i = 0; i < arr.length; i += size) {
     result.push(arr.slice(i, i + size));
   }
   return result;

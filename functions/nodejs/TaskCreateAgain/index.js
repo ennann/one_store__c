@@ -348,34 +348,31 @@ async function createStoreTaskEntryStart(object_store_task, logger) {
                 let feishuPeople = await application.data.object("_user")
                     .select("_id", "_department", "_lark_user_id")
                     .where({_id: object_store_task.task_handler._id || object_store_task.task_handler.id}).findOne();
+                content.header.title.content = "【任务发布】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + object_store_task.name + "门店任务请尽快处理！";
+                data.content = JSON.stringify(content);
                 // 判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
                 let object_task_def = await application.data.object("object_task_def")
                     .select("_id", "send_channel")
                     .where({_id: object_store_task.task_def._id || object_store_task.task_def.id}).findOne();
 
                 if (object_task_def.send_channel === "option_group") {
-                    data.receive_id_type = "chat_id"
                     //通过部门ID获取飞书群ID
                     let object_feishu_chat = await application.data.object("object_feishu_chat")
                         .select("_id", "chat_id")
                         .where({department: feishuPeople._department._id || feishuPeople._department.id}).findOne();
                     if (!object_feishu_chat) {
                         logger.warn(`该用户[${feishuPeople._id}]的部门飞书群不存在`);
-                        return {
-                            code: 0,
-                            message: `创建门店普通任务成功&组装门店普通任务[${object_store_task._id}]发送消息卡片失败`,
-                            messageCardSendData: {}
-                        };
+                        data.receive_id_type = "user_id"
+                        data.receive_id = feishuPeople._lark_user_id;
+                    }else{
+                        data.receive_id_type = "chat_id"
+                        data.receive_id = object_feishu_chat.chat_id
                     }
-                    data.receive_id = object_feishu_chat.chat_id
                 } else {
                     data.receive_id_type = "user_id"
                     data.receive_id = feishuPeople._lark_user_id;
                 }
-                content.header.title.content = "【任务发布】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + object_store_task.name + "门店任务请尽快处理！";
-                data.content = JSON.stringify(content);
             }
-
             return {code: 0, message: '创建门店普通任务成功', storeTaskId: storeTaskId, messageCardSendData: data};
 
         } catch (error) {

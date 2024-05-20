@@ -1,8 +1,8 @@
 {
-  "apiID": "one_store__c__function_aadgirwlrugfy",
-  "apiName": "FsTaskCreate",
+  "apiID": "one_store__c__function_aadgjmfa3r4dw",
+  "apiName": "MessageReadStatusUpdate",
   "label": {
-    "zh_CN": "飞书任务-创建任务",
+    "zh_CN": "更新消息已读状态",
     "en_US": ""
   },
   "description": {
@@ -13,9 +13,9 @@
   "frontendSDKInvokable": false,
   "input": [
     {
-      "key": "storeTaskId",
+      "key": "message_id",
       "type": "Text",
-      "label": "门店普通任务ID",
+      "label": "消息ID",
       "required": true,
       "description": ""
     }

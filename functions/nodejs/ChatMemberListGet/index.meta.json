@@ -1,8 +1,8 @@
 {
-  "apiID": "one_store__c__function_aadgirwlrugfy",
-  "apiName": "FsTaskCreate",
+  "apiID": "one_store__c__function_aadgjmcdgj2as",
+  "apiName": "ChatMemberListGet",
   "label": {
-    "zh_CN": "飞书任务-创建任务",
+    "zh_CN": "获取群成员列表",
     "en_US": ""
   },
   "description": {
@@ -13,9 +13,9 @@
   "frontendSDKInvokable": false,
   "input": [
     {
-      "key": "storeTaskId",
+      "key": "chat_id",
       "type": "Text",
-      "label": "门店普通任务ID",
+      "label": "群ID",
       "required": true,
       "description": ""
     }

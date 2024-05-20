@@ -189,29 +189,31 @@ module.exports = async function (params, context, logger) {
             const feishuPeople = await application.data.object('_user')
                 .select('_id', "_department", "_lark_user_id")
                 .where({_id: objectStoreTaskElement.task_handler._id}).findOne();
+            content.header.title.content = "【任务到期提醒】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + objectStoreTaskElement.name + "门店任务请尽快处理！";
+            data.content = JSON.stringify(content);
             //判断是群组发送（查询所在部门的门店群）还是机器人（机器人直发）发送
             let object_task_def = await application.data.object("object_task_def")
                 .select("_id", "send_channel")
                 .where({_id: objectStoreTaskElement.task_def._id || objectStoreTaskElement.task_def.id}).findOne();
             if (object_task_def.send_channel === "option_group") {
-                data.receive_id_type = "chat_id"
                 // logger.info("通过用户获取部门----->",JSON.stringify(user,null,2));
                 //通过部门ID获取飞书群ID
                 let object_feishu_chat = await application.data.object("object_feishu_chat")
                     .select("_id", "chat_id")
                     .where({department: feishuPeople._department._id || feishuPeople._department.id}).findOne();
                 if (object_feishu_chat){
+                    data.receive_id_type = "chat_id"
                     data.receive_id = object_feishu_chat.chat_id
                     messageCardSendDatas.push(data);
                 }else{
                     logger.warn(`该用户[${feishuPeople._id}]的部门飞书群不存在`)
+                    data.receive_id_type = "user_id"
+                    data.receive_id = feishuPeople._lark_user_id;
                 }
             } else {
                 data.receive_id_type = "user_id"
                 data.receive_id = feishuPeople._lark_user_id;
             }
-            content.header.title.content = "【任务到期提醒】" + feishuPeople._name.find(item => item.language_code === 2052).text + "有一条" + objectStoreTaskElement.name + "门店任务请尽快处理！";
-            data.content = JSON.stringify(content);
             messageCardSendDatas.push(data);
         }
     }
