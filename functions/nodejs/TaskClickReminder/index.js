@@ -80,7 +80,7 @@ module.exports = async function (params, context, logger) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "任务下发时间：" + dayjs(item.task_create_time).format('YYYY-MM-DD HH:mm:ss'),
+                            "content": "任务下发时间：" + dayjs(item.task_create_time).utcOffset(8).format('YYYY-MM-DD HH:mm:ss'),
                             "tag": "plain_text"
                         }
                     },

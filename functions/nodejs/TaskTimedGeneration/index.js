@@ -36,9 +36,9 @@ module.exports = async function (params, context, logger) {
     if (task_def_record.carbon_copy) {
         const carbonCopy = task_def_record.carbon_copy;
         const userList = await faas.function('DeployMemberRange').invoke({user_rule: carbonCopy});
-        logger.info(`抄送人员筛选规则[${carbonCopy._id}]返回人员数量->`, userList.length)
+        logger.info(`抄送人员筛选规则[${carbonCopy._id}]返回人员数量->`, userList.length,'详情->',JSON.stringify(userList,null,2))
         if (userList.length > 0) {
-            const res = await getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, taskBatchNumberCreateResult.object_task_create_monitor);
+            const res = await getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, taskBatchNumberCreateResult.object_task_create_monitor,logger);
             const cardDataList = res.cardDataList;
             const sendFeishuMessageResults = await Promise.all(cardDataList.map(item => limitedSendFeishuMessage(item)));
             const sendFeishuMessageSuccess = sendFeishuMessageResults.filter(result => result.code === 0);
@@ -58,7 +58,7 @@ module.exports = async function (params, context, logger) {
     await kunlun.redis.del(taskBatchNumberCreateResult?.task_id);
 
     // 调用创建门店普通任务函数
-    const storeTaskCreateResults = await createStoreTaskEntry(task_def_record, taskBatchNumberCreateResult.object_task_create_monitor, logger, client, limitedSendFeishuMessage);
+    const storeTaskCreateResults = await createStoreTaskEntry(task_def_record, taskBatchNumberCreateResult.object_task_create_monitor, logger, limitedSendFeishuMessage);
     logger.info(`成功批量创建门店普通任务`, storeTaskCreateResults);
 
     return {
@@ -143,7 +143,7 @@ async function createTaskMonitorEntry(task, logger) {
  * @param {*} limitedSendFeishuMessage
  * @returns
  */
-async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFeishuMessage) {
+async function createStoreTaskEntry(taskDef, task, logger, limitedSendFeishuMessage) {
     // task 代表任务处理记录（任务批次）
     const createDataList = [];
     try {
@@ -222,7 +222,7 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
         logger.info(`需要为任务处理记录（任务批次）[${task._id}], 创建的门店普通任务数量->`, createDataList.length);
 
         if (createDataList.length > 0) {
-            const storeTaskCreateResults = await Promise.all(createDataList.map(task => createStoreTaskEntryStart(item, task, logger, client)));
+            const storeTaskCreateResults = await Promise.all(createDataList.map(task => createStoreTaskEntryStart(task, logger)));
             const successfulStoreTasks = storeTaskCreateResults.filter(result => result.code === 0);
             const failedStoreTasks = storeTaskCreateResults.filter(result => result.code !== 0);
             logger.info(`为任务处理记录（任务批次）[${task._id}]创建门店普通任务成功数量: ${successfulStoreTasks.length}, 失败数量: ${failedStoreTasks.length}`);
@@ -295,13 +295,11 @@ async function createStoreTaskEntry(taskDef, task, logger, client, limitedSendFe
 
 /**
  * @description 创建门店普通任务，并发送消息
- * @param {*} item
  * @param {*} task
  * @param {*} logger
- * @param {*} client
  * @returns
  */
-async function createStoreTaskEntryStart(item, task, logger, client) {
+async function createStoreTaskEntryStart(task, logger) {
     // task 代表门店普通任务
     try {
         logger.info('createStoreTaskEntryStart[task]--->', task);
@@ -332,7 +330,6 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
             const android_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + storeTaskId._id;
             const ios_url = "https://et6su6w956.feishuapp.cn/ae/apps/one_store__c/aadgihlti4uni?params_var_LLsDqf8w=" + storeTaskId._id;
             const hourDiff = (task.task_plan_time - dayjs().valueOf()) / 36e5;
-            logger.info("task.source_department--->",);
             const content = {
                 config: {
                     wide_screen_mode: true,
@@ -355,7 +352,7 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
                     {
                         tag: 'div',
                         text: {
-                            content: '任务下发时间：' + dayjs(task.task_create_time).format('YYYY-MM-DD HH:mm:ss'),
+                            content: '任务下发时间：' + dayjs(task.task_create_time).utcOffset(8).format('YYYY-MM-DD HH:mm:ss'),
                             tag: 'plain_text',
                         },
                     },
@@ -472,11 +469,13 @@ async function createStoreTaskEntryStart(item, task, logger, client) {
  * @param {*} userList 用户列表
  * @param {*} task_def_record 任务定义
  * @param {*} object_task_create_monitor 任务批次
+ * @param {*} logger 日志
  * @returns
  */
-async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, object_task_create_monitor) {
+async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record, object_task_create_monitor,logger) {
     const cardDataList = [];
     const apassDataList = [];
+    logger.info("抄送任务定义详情->",JSON.stringify(task_def_record,null,2),"任务批次详情->",JSON.stringify(object_task_create_monitor,null,2));
     //遍历人员
     for (const user of userList) {
         //飞书消息
@@ -508,7 +507,11 @@ async function getTaskDefCopyAndFeishuMessageStructure(userList, task_def_record
             },
         };
         cardData.content = JSON.stringify(content);
-        cardDataList.push(cardData);
+        if (cardData.receive_id){
+            cardDataList.push(cardData);
+        }else {
+            logger.warn("抄送人的user_id为null->",JSON.stringify(user,2,null))
+        }
         //apass数据
         const apassData = {
             task_def: {_id: task_def_record._id},

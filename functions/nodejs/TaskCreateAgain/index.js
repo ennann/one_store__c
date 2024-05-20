@@ -291,7 +291,7 @@ async function createStoreTaskEntryStart(object_store_task, logger) {
                     {
                         "tag": "div",
                         "text": {
-                            "content": "任务下发时间：" + dayjs(object_store_task.task_create_time).format('YYYY-MM-DD HH:mm:ss'),
+                            "content": "任务下发时间：" + dayjs(object_store_task.task_create_time).utcOffset(8).format('YYYY-MM-DD HH:mm:ss'),
                             "tag": "plain_text"
                         }
                     },
